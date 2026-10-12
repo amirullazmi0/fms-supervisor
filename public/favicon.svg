@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0d7a69"/>
+  <!-- bak truk -->
+  <rect x="8" y="19" width="30" height="22" rx="2.5" fill="#ffffff"/>
+  <!-- kabin -->
+  <path d="M38 25h9.5c1.2 0 2.3.6 3 1.6l4.6 6.6c.6.8.9 1.8.9 2.8V41H38z" fill="#ffffff"/>
+  <path d="M41 28h6l3.6 5.2H41z" fill="#0d7a69"/>
+  <!-- roda -->
+  <circle cx="18" cy="44" r="5.5" fill="#16201e" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="47" cy="44" r="5.5" fill="#16201e" stroke="#ffffff" stroke-width="2.5"/>
+</svg>

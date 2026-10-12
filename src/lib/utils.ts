@@ -1,0 +1,8 @@
+import { clsx } from 'clsx';
+import type { ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// Gabung className Tailwind (yang belakangan menang kalau bentrok).
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
+}
