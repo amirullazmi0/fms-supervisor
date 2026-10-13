@@ -13,12 +13,10 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json yarn.lock ./
 COPY . .
 
-# NEXT_PUBLIC_* are baked in at build time: set them as CapRover app env vars
-# (CapRover passes them as build args).
-ARG NEXT_PUBLIC_API_URL
+# NEXT_PUBLIC_* are baked in at build time (CapRover passes app env vars as build args).
+# The backend address is NOT one of them: the BFF reads API_URL at runtime.
 ARG NEXT_PUBLIC_DARK_MODE
 
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_DARK_MODE=${NEXT_PUBLIC_DARK_MODE}
 
 RUN yarn build

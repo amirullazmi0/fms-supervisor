@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { SESSION } from '@/lib/session';
 
 // Route protection (Next 16 `proxy`, formerly `middleware`). Pages need a session
-// (access or refresh token: an expired access token is renewed by the axios interceptor).
+// (access or refresh cookie: an expired access token is renewed by the BFF).
 // What a user may do inside is decided by permissions, checked in the UI and by the API.
 export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    const hasSession = Boolean(request.cookies.get('accessToken')?.value || request.cookies.get('refreshToken')?.value);
+    const hasSession = Boolean(request.cookies.get(SESSION.access)?.value || request.cookies.get(SESSION.refresh)?.value);
 
     if (pathname.startsWith('/auth')) {
         if (hasSession) return NextResponse.redirect(new URL('/', request.url));
@@ -22,5 +23,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|favicon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+    matcher: ['/((?!api/|_next/static|_next/image|favicon.ico|favicon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

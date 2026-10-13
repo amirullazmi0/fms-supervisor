@@ -5,9 +5,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import Cookies from 'js-cookie';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
-import { refreshTokens } from '@/lib/axios';
+import { redirectToLogin } from '@/lib/axios';
 import { P, useCan } from '@/lib/permissions';
 import type { IoTable } from '@/lib/format';
 import type { GlobalApiResponse } from '@/types/api/responses';
@@ -104,7 +103,7 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
             listeners.current.forEach((fn) => fn(msg));
         };
 
-        // EventSource cannot send an Authorization header, so the stream is read with fetch.
+        // Read through the BFF (it adds the token from the httpOnly cookie and renews it).
         let stopped = false;
         let ctrl: AbortController | null = null;
         let attempt = 0;
@@ -112,13 +111,11 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
             while (!stopped) {
                 ctrl = new AbortController();
                 try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stream`, {
-                        headers: { Authorization: `Bearer ${Cookies.get('accessToken') ?? ''}` },
-                        signal: ctrl.signal,
-                    });
+                    const res = await fetch('/api/stream', { signal: ctrl.signal, credentials: 'same-origin' });
                     if (res.status === 401) {
-                        await refreshTokens(); // the next loop reconnects with the new token
-                        continue;
+                        stopped = true; // the BFF could not renew the session
+                        redirectToLogin();
+                        break;
                     }
                     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
                     setLive('on');
