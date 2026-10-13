@@ -4,7 +4,10 @@ import { Suspense } from 'react';
 import PageLoading from '@/components/custom/page-loading';
 
 // Maps (Leaflet) need the browser, so the view renders on the client only.
-const LiveView = dynamic(() => import('./live.view'), { ssr: false, loading: () => <PageLoading /> });
+const LiveView = dynamic(() => import('./live.view'), {
+    ssr: false,
+    loading: () => <PageLoading />,
+});
 
 export default function Page() {
     return (

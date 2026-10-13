@@ -50,14 +50,19 @@ const useQueryApiRequest = <T,>({
             if (queryFetch.isError || queryFetch.isSuccess) setLoading(false);
         }
         if (queryFetch.isError && config.errorNotification) {
-            toast.error(config.errorNotificationMessage ?? apiErrorMessage(queryFetch.error, 'Gagal ngambil data'));
+            toast.error(
+                config.errorNotificationMessage ??
+                    apiErrorMessage(queryFetch.error, 'Gagal ngambil data'),
+            );
         }
         if (queryFetch.isSuccess) {
             if (onSuccess && queryFetch.data) onSuccess(queryFetch.data);
             if (config.successNotification) {
                 const msg =
                     config.successNotificationMessage ??
-                    (queryFetch.data && typeof queryFetch.data === 'object' && 'message' in queryFetch.data
+                    (queryFetch.data &&
+                    typeof queryFetch.data === 'object' &&
+                    'message' in queryFetch.data
                         ? (queryFetch.data as { message?: string }).message
                         : undefined) ??
                     'Data loaded';
@@ -65,7 +70,13 @@ const useQueryApiRequest = <T,>({
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [queryFetch.isLoading, queryFetch.isError, queryFetch.isSuccess, queryFetch.data, queryFetch.error]);
+    }, [
+        queryFetch.isLoading,
+        queryFetch.isError,
+        queryFetch.isSuccess,
+        queryFetch.data,
+        queryFetch.error,
+    ]);
 
     return queryFetch;
 };

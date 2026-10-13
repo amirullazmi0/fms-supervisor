@@ -11,51 +11,52 @@ export const THEME_KEY = 'fmc.theme';
 export const DARK_MODE_ENABLED = process.env.NEXT_PUBLIC_DARK_MODE === 'true';
 
 export function readTheme(): ThemeMode {
-  if (!DARK_MODE_ENABLED) return 'light';
-  if (typeof window === 'undefined') return 'system';
-  try {
-    const v = localStorage.getItem(THEME_KEY);
-    // Default light (same look in every FMS app); 'system' only when chosen.
-    return v === 'dark' || v === 'system' ? v : 'light';
-  } catch {
-    return 'system';
-  }
+    if (!DARK_MODE_ENABLED) return 'light';
+    if (typeof window === 'undefined') return 'system';
+    try {
+        const v = localStorage.getItem(THEME_KEY);
+        // Default light (same look in every FMS app); 'system' only when chosen.
+        return v === 'dark' || v === 'system' ? v : 'light';
+    } catch {
+        return 'system';
+    }
 }
 
 // Tailwind/shadcn pakai kelas `dark` di <html>. "system" ngikutin setelan OS (dan ikut berubah kalau OS ganti).
-const media = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const media =
+    typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
 export function applyTheme(mode: ThemeMode): void {
-  const dark = mode === 'dark' || (mode === 'system' && Boolean(media?.matches));
-  document.documentElement.classList.toggle('dark', dark);
-  document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    const dark = mode === 'dark' || (mode === 'system' && Boolean(media?.matches));
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
 }
 
 function persist(mode: ThemeMode): void {
-  try {
-    if (mode === 'light') localStorage.removeItem(THEME_KEY);
-    else localStorage.setItem(THEME_KEY, mode);
-  } catch {
-    /* storage nggak tersedia, tema tetap kepasang buat sesi ini */
-  }
+    try {
+        if (mode === 'light') localStorage.removeItem(THEME_KEY);
+        else localStorage.setItem(THEME_KEY, mode);
+    } catch {
+        /* storage nggak tersedia, tema tetap kepasang buat sesi ini */
+    }
 }
 
 export function useTheme(): [ThemeMode, (mode: ThemeMode) => void] {
-  // Start from 'system' on both server and client (no hydration mismatch), then read the saved choice.
-  const [mode, setMode] = useState<ThemeMode>('light');
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    setMode(readTheme());
-    setLoaded(true);
-  }, []);
-  useEffect(() => {
-    if (!loaded) return;
-    applyTheme(mode);
-    persist(mode);
-    if (mode !== 'system' || !media) return;
-    const onChange = () => applyTheme('system');
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
-  }, [mode, loaded]);
-  return [mode, setMode];
+    // Start from 'system' on both server and client (no hydration mismatch), then read the saved choice.
+    const [mode, setMode] = useState<ThemeMode>('light');
+    const [loaded, setLoaded] = useState(false);
+    useEffect(() => {
+        setMode(readTheme());
+        setLoaded(true);
+    }, []);
+    useEffect(() => {
+        if (!loaded) return;
+        applyTheme(mode);
+        persist(mode);
+        if (mode !== 'system' || !media) return;
+        const onChange = () => applyTheme('system');
+        media.addEventListener('change', onChange);
+        return () => media.removeEventListener('change', onChange);
+    }, [mode, loaded]);
+    return [mode, setMode];
 }

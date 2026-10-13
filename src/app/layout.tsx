@@ -13,7 +13,10 @@ export const metadata: Metadata = {
 };
 
 // Theme before React runs (default light; dark only when chosen), so the page does not flash.
-const themeScript = process.env.NEXT_PUBLIC_DARK_MODE !== 'true' ? '' : `try{var t=localStorage.getItem('fmc.theme');var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}`;
+const themeScript =
+    process.env.NEXT_PUBLIC_DARK_MODE !== 'true'
+        ? ''
+        : `try{var t=localStorage.getItem('fmc.theme');var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (

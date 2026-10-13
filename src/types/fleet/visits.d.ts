@@ -24,7 +24,7 @@ export interface SiteVisitRecord {
     routeName: string | null;
     siteName: string;
     role: 'loading' | 'unloading';
-    status: 'inside' | 'done';
+    status: 'inside' | 'done' | 'finished'; // finished = shift beres waktu truk masih di titik
     arriveAt: number;
     departAt: number | null;
     dwellMs: number;

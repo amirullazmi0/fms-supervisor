@@ -36,5 +36,6 @@ export type Permission = (typeof P)[keyof typeof P];
 export function useCan(): (permission: Permission) => boolean {
     const user = useAuthStore((s) => s.user);
     // Administrator users pass every check (same as the backend).
-    return (permission) => Boolean(user?.is_administrator || user?.permissions?.includes(permission));
+    return (permission) =>
+        Boolean(user?.is_administrator || user?.permissions?.includes(permission));
 }

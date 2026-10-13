@@ -1,7 +1,10 @@
 import { AxiosErrorResponse } from '@/types/api/responses';
 
 // Readable message from an API error: validation map, list, string, then message.
-export function apiErrorMessage(error: AxiosErrorResponse | null | undefined, fallback = 'Something went wrong'): string {
+export function apiErrorMessage(
+    error: AxiosErrorResponse | null | undefined,
+    fallback = 'Something went wrong',
+): string {
     const data = error?.response?.data;
     const detail = data?.error;
     if (detail && typeof detail === 'object' && !Array.isArray(detail)) {

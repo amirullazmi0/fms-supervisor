@@ -13,7 +13,10 @@ const PUBLIC_PATHS = ['/auth/sign-in'];
 // The BFF already tried to renew the session: a 401 here means signing in again.
 export const redirectToLogin = () => {
     clearAuthFromStore();
-    if (globalThis.window !== undefined && !PUBLIC_PATHS.includes(globalThis.window.location.pathname)) {
+    if (
+        globalThis.window !== undefined &&
+        !PUBLIC_PATHS.includes(globalThis.window.location.pathname)
+    ) {
         globalThis.window.location.href = '/auth/sign-in';
     }
 };
@@ -21,7 +24,11 @@ export const redirectToLogin = () => {
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401 && !String(error.config?.url ?? '').includes('/auth/login')) redirectToLogin();
+        if (
+            error.response?.status === 401 &&
+            !String(error.config?.url ?? '').includes('/auth/login')
+        )
+            redirectToLogin();
         throw error;
     },
 );

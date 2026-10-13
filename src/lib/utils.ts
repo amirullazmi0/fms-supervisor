@@ -4,5 +4,5 @@ import { twMerge } from 'tailwind-merge';
 
 // Gabung className Tailwind (yang belakangan menang kalau bentrok).
 export function cn(...inputs: ClassValue[]): string {
-  return twMerge(clsx(inputs));
+    return twMerge(clsx(inputs));
 }

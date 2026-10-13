@@ -59,7 +59,12 @@ const useMutationApiRequest = <T, V>({
             body = Object.keys(rest).length ? rest : undefined;
         }
         const url = constructUrl(mutationConfig.url, { query: resolvedParams });
-        const requestConfig: AxiosRequestConfig = { url, method: mutationConfig.method, data: body, params: queries };
+        const requestConfig: AxiosRequestConfig = {
+            url,
+            method: mutationConfig.method,
+            data: body,
+            params: queries,
+        };
         if (isFormData) requestConfig.headers = { 'Content-Type': 'multipart/form-data' };
         const response = await axiosInstance(requestConfig);
         return response.data;
@@ -78,7 +83,11 @@ const useMutationApiRequest = <T, V>({
                 });
             }
             if (config?.successNotification ?? true) {
-                toast.success(config?.successNotificationMessage ?? (data as ApiResponse)?.message ?? 'Berhasil');
+                toast.success(
+                    config?.successNotificationMessage ??
+                        (data as ApiResponse)?.message ??
+                        'Berhasil',
+                );
             }
         },
         onError: (error) => {

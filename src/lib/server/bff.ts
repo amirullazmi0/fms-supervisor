@@ -31,8 +31,13 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status }
 const fail = (message: string, status: number) => json({ success: false, message }, status);
 
 function publicOrigin(req: NextRequest): { origin: string; https: boolean } {
-    const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() || req.nextUrl.protocol.replace(':', '');
-    const host = req.headers.get('x-forwarded-host')?.split(',')[0]?.trim() || req.headers.get('host') || req.nextUrl.host;
+    const proto =
+        req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
+        req.nextUrl.protocol.replace(':', '');
+    const host =
+        req.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+        req.headers.get('host') ||
+        req.nextUrl.host;
     return { origin: `${proto}://${host}`, https: proto === 'https' };
 }
 
@@ -46,13 +51,22 @@ function originError(req: NextRequest): NextResponse | null {
 
 function setSession(res: NextResponse, req: NextRequest, t: Tokens) {
     const base = { path: '/', sameSite: 'lax' as const, secure: publicOrigin(req).https };
-    res.cookies.set(SESSION.access, t.access_token, { ...base, httpOnly: true, maxAge: Math.max(60, t.expires_in) });
-    res.cookies.set(SESSION.refresh, t.refresh_token, { ...base, httpOnly: true, maxAge: REFRESH_MAX_AGE });
+    res.cookies.set(SESSION.access, t.access_token, {
+        ...base,
+        httpOnly: true,
+        maxAge: Math.max(60, t.expires_in),
+    });
+    res.cookies.set(SESSION.refresh, t.refresh_token, {
+        ...base,
+        httpOnly: true,
+        maxAge: REFRESH_MAX_AGE,
+    });
     res.cookies.set(SESSION.flag, '1', { ...base, httpOnly: false, maxAge: REFRESH_MAX_AGE });
 }
 
 function clearSession(res: NextResponse) {
-    for (const name of [SESSION.access, SESSION.refresh, SESSION.flag]) res.cookies.set(name, '', { path: '/', maxAge: 0 });
+    for (const name of [SESSION.access, SESSION.refresh, SESSION.flag])
+        res.cookies.set(name, '', { path: '/', maxAge: 0 });
 }
 
 function upstreamHeaders(req: NextRequest, accessToken?: string): Headers {
@@ -73,7 +87,10 @@ async function readJson<T>(res: Response): Promise<Envelope<T>> {
     try {
         return JSON.parse(text) as Envelope<T>;
     } catch {
-        return { success: false, message: IS_DEV ? text.slice(0, 500) : 'Respon server nggak valid' };
+        return {
+            success: false,
+            message: IS_DEV ? text.slice(0, 500) : 'Respon server nggak valid',
+        };
     }
 }
 
@@ -109,19 +126,36 @@ function refresh(refreshToken: string): Promise<Tokens | null> {
 async function login(req: NextRequest) {
     let upstream: Response;
     try {
-        upstream = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers: upstreamHeaders(req), body: await req.text(), cache: 'no-store' });
+        upstream = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: upstreamHeaders(req),
+            body: await req.text(),
+            cache: 'no-store',
+        });
     } catch {
         return unreachable();
     }
     const body = await readJson<Tokens & { user: { admin_app?: boolean } }>(upstream);
-    if (!upstream.ok || !body.data?.access_token) return json({ success: false, message: body.message ?? 'Login gagal', errors: body.errors }, upstream.status || 400);
+    if (!upstream.ok || !body.data?.access_token)
+        return json(
+            { success: false, message: body.message ?? 'Login gagal', errors: body.errors },
+            upstream.status || 400,
+        );
     const { user, expires_in, access_token } = body.data;
     if (REQUIRE_ADMIN_APP && !user?.admin_app) {
         // Not allowed in here: end the backend session again and set no cookie.
-        void fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: upstreamHeaders(req, access_token), cache: 'no-store' }).catch(() => {});
+        void fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            headers: upstreamHeaders(req, access_token),
+            cache: 'no-store',
+        }).catch(() => {});
         return fail(NOT_ADMIN, 403);
     }
-    const res = json({ success: true, message: body.message ?? 'Login berhasil', data: { user, expires_in } });
+    const res = json({
+        success: true,
+        message: body.message ?? 'Login berhasil',
+        data: { user, expires_in },
+    });
     setSession(res, req, body.data);
     return res;
 }
@@ -131,7 +165,11 @@ async function logout(req: NextRequest) {
     const rt = req.cookies.get(SESSION.refresh)?.value;
     if (!token && rt) token = (await refresh(rt))?.access_token;
     if (token) {
-        await fetch(`${API_URL}/auth/logout`, { method: 'POST', headers: upstreamHeaders(req, token), cache: 'no-store' }).catch(() => {});
+        await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            headers: upstreamHeaders(req, token),
+            cache: 'no-store',
+        }).catch(() => {});
     }
     const res = json({ success: true, message: 'Logout berhasil' });
     clearSession(res);
@@ -146,17 +184,29 @@ async function renew(req: NextRequest) {
         clearSession(res);
         return res;
     }
-    const res = json({ success: true, message: 'Sesi diperpanjang', data: { expires_in: t.expires_in } });
+    const res = json({
+        success: true,
+        message: 'Sesi diperpanjang',
+        data: { expires_in: t.expires_in },
+    });
     setSession(res, req, t);
     return res;
 }
 
 // ---------- everything else: forwarded as is ----------
-const DROP_RESPONSE_HEADERS = new Set(['set-cookie', 'content-length', 'content-encoding', 'transfer-encoding', 'connection', 'keep-alive']);
+const DROP_RESPONSE_HEADERS = new Set([
+    'set-cookie',
+    'content-length',
+    'content-encoding',
+    'transfer-encoding',
+    'connection',
+    'keep-alive',
+]);
 
 async function forward(req: NextRequest, path: string) {
     const target = `${API_URL}/${path}${req.nextUrl.search}`;
-    const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer();
+    const body =
+        req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer();
     let token = req.cookies.get(SESSION.access)?.value;
     const rt = req.cookies.get(SESSION.refresh)?.value;
     let renewed: Tokens | null = null;
@@ -167,7 +217,15 @@ async function forward(req: NextRequest, path: string) {
         token = renewed?.access_token;
     }
     // req.signal: the browser leaving (e.g. the SSE stream) also closes the backend request.
-    const send = (t?: string) => fetch(target, { method: req.method, headers: upstreamHeaders(req, t), body, cache: 'no-store', redirect: 'manual', signal: req.signal });
+    const send = (t?: string) =>
+        fetch(target, {
+            method: req.method,
+            headers: upstreamHeaders(req, t),
+            body,
+            cache: 'no-store',
+            redirect: 'manual',
+            signal: req.signal,
+        });
 
     let upstream: Response;
     try {
@@ -185,7 +243,11 @@ async function forward(req: NextRequest, path: string) {
     upstream.headers.forEach((v, k) => {
         if (!DROP_RESPONSE_HEADERS.has(k.toLowerCase())) headers.set(k, v);
     });
-    const res = new NextResponse(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers });
+    const res = new NextResponse(upstream.body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers,
+    });
     if (renewed) setSession(res, req, renewed);
     else if (upstream.status === 401 && (token || rt)) clearSession(res); // session can't be renewed: sign in again
     return res;

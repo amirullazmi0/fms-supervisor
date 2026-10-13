@@ -14,7 +14,11 @@ import { GlobalApiResponse } from '@/types/api/responses';
 export default function useFetchApi() {
     const queryClient = useQueryClient();
     return useCallback(
-        async <T,>(key: AllQueryKeys, params?: Record<string, string>, queries?: Record<string, unknown>): Promise<T | undefined> => {
+        async <T>(
+            key: AllQueryKeys,
+            params?: Record<string, string>,
+            queries?: Record<string, unknown>,
+        ): Promise<T | undefined> => {
             const res = await queryClient.fetchQuery<GlobalApiResponse<T>>({
                 queryKey: [key, params, queries],
                 queryFn: async () => {

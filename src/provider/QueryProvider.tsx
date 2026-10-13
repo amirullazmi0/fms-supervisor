@@ -8,13 +8,18 @@ type LoadingContextType = {
     setLoading: (v: boolean) => void;
 };
 
-export const LoadingContext = createContext<LoadingContextType>({ loading: false, setLoading: () => {} });
+export const LoadingContext = createContext<LoadingContextType>({
+    loading: false,
+    setLoading: () => {},
+});
 
 export default function QueryProvider({ children }: { children: ReactNode }) {
     const [queryClient] = useState(
         () =>
             new QueryClient({
-                defaultOptions: { queries: { refetchOnWindowFocus: false, refetchOnMount: false, retry: 1 } },
+                defaultOptions: {
+                    queries: { refetchOnWindowFocus: false, refetchOnMount: false, retry: 1 },
+                },
             }),
     );
     const [loading, setLoading] = useState<boolean>(false);

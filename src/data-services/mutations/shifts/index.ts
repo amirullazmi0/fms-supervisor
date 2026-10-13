@@ -29,8 +29,20 @@ export const shiftsMutations: MutationDataService<ShiftsMutationKeys> = {
     'shifts-start': { url: '/shifts/:id/start', method: 'POST', refetchQueries: SHIFT_VIEWS },
     'shifts-close': { url: '/shifts/:id/close', method: 'POST', refetchQueries: SHIFT_VIEWS },
     'shifts-reopen': { url: '/shifts/:id/reopen', method: 'POST', refetchQueries: SHIFT_VIEWS },
-    'shifts-assign': { url: '/shifts/:id/assignments', method: 'POST', refetchQueries: SHIFT_VIEWS },
-    'shifts-copy-previous': { url: '/shifts/:id/copy-previous', method: 'POST', refetchQueries: SHIFT_VIEWS },
+    'shifts-assign': {
+        url: '/shifts/:id/assignments',
+        method: 'POST',
+        refetchQueries: SHIFT_VIEWS,
+    },
+    'shifts-copy-previous': {
+        url: '/shifts/:id/copy-previous',
+        method: 'POST',
+        refetchQueries: SHIFT_VIEWS,
+    },
     'assignments-update': { url: '/assignments/:id', method: 'PUT', refetchQueries: SHIFT_VIEWS },
-    'assignments-delete': { url: '/assignments/:id', method: 'DELETE', refetchQueries: [...SHIFT_VIEWS, 'reports'] },
+    'assignments-delete': {
+        url: '/assignments/:id',
+        method: 'DELETE',
+        refetchQueries: [...SHIFT_VIEWS, 'reports'],
+    },
 };
