@@ -94,7 +94,8 @@ export interface ServerStatus {
   port: number;
   lanIps: string[];
   // Alamat tunnel publik (ngrok / bore.pub), ini yang diisi di Domain/Port alat.
-  tunnel: { host: string; port: number; provider: 'ngrok' | 'bore' } | null;
+  tunnel: { host: string; port: number; provider: 'ngrok' | 'bore' | 'manual' } | null;
+  tunnelEnabled?: boolean; // TUNNEL=true di backend. false = udah deploy, alat konek langsung ke server
   devicePort: number;
   db: { devices: number; records: number; events: number };
   connected: number;

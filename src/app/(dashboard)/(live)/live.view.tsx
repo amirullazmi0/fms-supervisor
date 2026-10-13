@@ -172,13 +172,20 @@ function ServerCard() {
           {s.tunnel ? (
             <>
               <b className="font-mono text-[15px]">{s.tunnel.host}:{s.tunnel.port}</b>
-              <span className="text-xs text-muted-foreground">tunnel {s.tunnel.provider === 'bore' ? 'bore.pub' : 'ngrok'}, isi di Domain/Port alat</span>
+              <span className="text-xs text-muted-foreground">{s.tunnel.provider === 'manual' ? 'alamat server' : `tunnel ${s.tunnel.provider === 'bore' ? 'bore.pub' : 'ngrok'}`}, isi di Domain/Port alat</span>
             </>
           ) : (
-            <span className="flex flex-col items-start gap-1">
-              <Badge variant="warning">Tunnel mati</Badge>
-              <span className="text-xs text-muted-foreground">Alat cuma bisa konek dari jaringan lokal.</span>
-            </span>
+            s.tunnelEnabled ? (
+              <span className="flex flex-col items-start gap-1">
+                <Badge variant="warning">Tunnel mati</Badge>
+                <span className="text-xs text-muted-foreground">Alat cuma bisa konek dari jaringan lokal.</span>
+              </span>
+            ) : (
+              <span className="flex flex-col items-start gap-1">
+                <b className="font-mono text-[15px]">&lt;IP/domain server&gt;:{s.devicePort}</b>
+                <span className="text-xs text-muted-foreground">tanpa tunnel, alat konek langsung ke server. Isi TUNNEL_HOST di backend biar alamatnya tampil di sini.</span>
+              </span>
+            )
           )}
         </div>
         {sms && (

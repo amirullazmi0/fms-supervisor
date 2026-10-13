@@ -278,12 +278,13 @@ function GlobalNotifier() {
     prevAddr.current = addr;
     if (prev === null || prev === addr) return;
     if (!addr) {
-      toast({ title: 'Tunnel mati', body: 'Alat nggak bisa konek dari internet. Runner lagi nyoba bikin ulang tunnel.', level: 'crit' });
+      // Tunnel sengaja dimatiin (TUNNEL=false, udah deploy) bukan masalah.
+      if (status.tunnelEnabled) toast({ title: 'Tunnel mati', body: 'Alat nggak bisa konek dari internet. Runner lagi nyoba bikin ulang tunnel.', level: 'crit' });
       return;
     }
     const [host, port] = addr.split(':');
-    toast({ title: `Alamat tunnel berubah: ${addr}`, body: `Kirim SMS ke alat (2 spasi di depan): setparam 2004:${host};2005:${port}`, level: 'warn' });
-    notify('Alamat tunnel berubah', addr);
+    toast({ title: `Alamat alat berubah: ${addr}`, body: `Kirim SMS ke alat (2 spasi di depan): setparam 2004:${host};2005:${port}`, level: 'warn' });
+    notify('Alamat alat berubah', addr);
   }, [addr, status, toast]);
 
   useStream((msg) => {

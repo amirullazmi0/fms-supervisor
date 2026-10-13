@@ -225,7 +225,7 @@ export default function TrackView() {
         {ready && list.length === 0 && (
           <Empty>
             Belum ada kendaraan yang terdaftar. Buat contoh, jalanin <code className="font-mono">go run ./cmd/simulator</code>. Alamat buat alat asli:{' '}
-            <span className="font-mono">{status?.tunnel ? `${status.tunnel.host}:${status.tunnel.port}` : 'tunnel belum aktif'}</span>
+            <span className="font-mono">{status?.tunnel ? `${status.tunnel.host}:${status.tunnel.port}` : status && !status.tunnelEnabled ? `IP/domain server:${status.devicePort}` : 'tunnel belum aktif'}</span>
           </Empty>
         )}
         {list.length > 0 && shown.length === 0 && <Empty>Nggak ada truk yang cocok.</Empty>}
