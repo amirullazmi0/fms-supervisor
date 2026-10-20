@@ -6,7 +6,8 @@ export type DevicesQueryKeys =
     | 'devices-day'
     | 'devices-ritase'
     | 'devices-records'
-    | 'devices-raw';
+    | 'devices-raw'
+    | 'devices-installs';
 
 export const devicesQueries: QueriesDataService<DevicesQueryKeys> = {
     devices: '/devices',
@@ -15,4 +16,5 @@ export const devicesQueries: QueriesDataService<DevicesQueryKeys> = {
     'devices-ritase': '/devices/:imei/ritase',
     'devices-records': '/devices/:imei/records',
     'devices-raw': '/devices/:imei/raw',
+    'devices-installs': '/devices/:imei/installs',
 };

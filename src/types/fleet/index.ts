@@ -50,6 +50,10 @@ export interface Device {
     vehicle: string | null;
     payloadTon: number; // truck factor: ton per rit
     unitType: UnitType;
+    brand?: string | null;
+    model?: string | null;
+    trackerModel?: string | null; // FMC150 / FMC650 / ...
+    bucketM3?: number | null; // kapasitas bucket excavator
     online: boolean;
     remote: string | null;
     connectedAt: number | null;
@@ -632,4 +636,14 @@ export interface AvailabilityReport {
     units: AvailabilityRow[];
     types: AvailabilityRow[];
     total: AvailabilityRow[];
+}
+
+// Riwayat pemasangan tracker ke unit (GET /devices/:imei/installs). removedAt null = masih terpasang.
+export interface DeviceInstall {
+    id: string;
+    imei: string;
+    plate: string;
+    name: string | null;
+    installedAt: number;
+    removedAt: number | null;
 }

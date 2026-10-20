@@ -1,6 +1,6 @@
 'use client';
-// Dialog ubah info unit (plat / nomor lambung, nama, jenis, truck factor) + pairing tablet MDT
-// + hapus unit beserta semua datanya.
+// Dialog ubah info unit (plat / nomor lambung, nama, jenis, truck factor, merek, model, model tracker,
+// kapasitas bucket) + riwayat pemasangan tracker + pairing tablet MDT + hapus unit beserta datanya.
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Trash2 } from 'lucide-react';
@@ -25,6 +25,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import MdtPairing from '@/components/fleet/MdtPairing';
+import InstallHistory from '@/components/fleet/InstallHistory';
 import type { Device, UnitType } from '@/types/fleet';
 
 interface Form {
@@ -33,7 +34,13 @@ interface Form {
     vehicle: string;
     payloadTon: string;
     unitType: UnitType;
+    brand: string;
+    model: string;
+    trackerModel: string;
+    bucketM3: string;
 }
+
+const TRACKERS = ['FMC150', 'FMC650', 'FMC130', 'FMC920', 'Lainnya'];
 
 export default function TruckForm({
     d,
@@ -51,6 +58,10 @@ export default function TruckForm({
         vehicle: '',
         payloadTon: '20',
         unitType: 'DT',
+        brand: '',
+        model: '',
+        trackerModel: '',
+        bucketM3: '',
     });
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -73,6 +84,10 @@ export default function TruckForm({
                 vehicle: d.vehicle ?? '',
                 payloadTon: String(d.payloadTon ?? 20),
                 unitType: d.unitType ?? 'DT',
+                brand: d.brand ?? '',
+                model: d.model ?? '',
+                trackerModel: d.trackerModel ?? '',
+                bucketM3: d.bucketM3 ? String(d.bucketM3) : '',
             });
         }
     }, [open, d]);
@@ -80,18 +95,29 @@ export default function TruckForm({
         setForm({ ...form, [k]: e.target.value });
     const payload = Number(form.payloadTon.replace(',', '.'));
     const payloadError = !(payload > 0 && payload <= 500) ? 'Isi 0–500 ton' : undefined;
+    const bucket = form.bucketM3 ? Number(form.bucketM3.replace(',', '.')) : 0;
+    const bucketError = !(bucket >= 0 && bucket <= 100) ? 'Isi 0–100 m³' : undefined;
 
     const save = async (e: FormEvent) => {
         e.preventDefault();
-        if (payloadError) return;
+        if (payloadError || bucketError) return;
         setSaving(true);
         try {
             await update.mutateAsync({
                 plate: form.plate,
                 name: form.name,
-                vehicle: form.vehicle,
+                // vehicle (teks lama) = merek + model, tetap dipakai tampilan lama.
+                vehicle:
+                    [form.brand, form.model]
+                        .map((x) => x.trim())
+                        .filter(Boolean)
+                        .join(' ') || form.vehicle,
                 payloadTon: payload,
                 unitType: form.unitType,
+                brand: form.brand,
+                model: form.model,
+                trackerModel: form.trackerModel,
+                bucketM3: form.unitType === 'EX' ? bucket : 0,
             });
             toast({ title: 'Info unit disimpan', body: form.plate || form.name || d.imei });
             onOpenChange(false);
@@ -170,14 +196,48 @@ export default function TruckForm({
                                 />
                             </Field>
                         </div>
-                        <Field label="Merek / model">
-                            <Input
-                                value={form.vehicle}
-                                onChange={set('vehicle')}
-                                placeholder="Hino FM 260 JD"
-                                autoComplete="off"
-                            />
-                        </Field>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Merek">
+                                <Input
+                                    value={form.brand}
+                                    onChange={set('brand')}
+                                    placeholder={form.vehicle || 'Hino'}
+                                    autoComplete="off"
+                                />
+                            </Field>
+                            <Field label="Model">
+                                <Input
+                                    value={form.model}
+                                    onChange={set('model')}
+                                    placeholder="FM 260 JD"
+                                    autoComplete="off"
+                                />
+                            </Field>
+                            <Field label="Model tracker">
+                                <SimpleSelect
+                                    value={form.trackerModel}
+                                    onChange={(v) => setForm({ ...form, trackerModel: v })}
+                                    options={TRACKERS.map((t) => ({ value: t, label: t }))}
+                                    placeholder="Pilih model tracker"
+                                    aria-label="Model tracker"
+                                />
+                            </Field>
+                            {form.unitType === 'EX' && (
+                                <Field
+                                    label="Kapasitas bucket (m³)"
+                                    hint="Dipakai untuk produktivitas excavator."
+                                    error={bucketError}
+                                >
+                                    <Input
+                                        value={form.bucketM3}
+                                        onChange={set('bucketM3')}
+                                        inputMode="decimal"
+                                        placeholder="3,5"
+                                        autoComplete="off"
+                                    />
+                                </Field>
+                            )}
+                        </div>
                         <DialogFooter className="sm:justify-between">
                             {can(P.deviceDelete) ? (
                                 <Button
@@ -199,12 +259,16 @@ export default function TruckForm({
                                 >
                                     Batal
                                 </Button>
-                                <Button type="submit" disabled={saving || !!payloadError}>
+                                <Button
+                                    type="submit"
+                                    disabled={saving || !!payloadError || !!bucketError}
+                                >
                                     {saving ? 'Menyimpan…' : 'Simpan'}
                                 </Button>
                             </div>
                         </DialogFooter>
                     </form>
+                    {open && <InstallHistory imei={d.imei} />}
                     {can(P.mdtManage) && open && <MdtPairing d={d} />}
                 </DialogContent>
             </Dialog>
