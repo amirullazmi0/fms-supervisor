@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
+    Activity,
     Bell,
     CalendarClock,
     ChartColumn,
@@ -114,6 +115,13 @@ const NAV: {
         need: [P.reportRead],
         group: 'Produksi',
         bottom: true,
+    },
+    {
+        to: '/availability',
+        label: 'PA & UA',
+        icon: Activity,
+        need: [P.reportRead],
+        group: 'Produksi',
     },
     {
         to: '/reports',

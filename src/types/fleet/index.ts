@@ -593,3 +593,34 @@ export interface MdtTablet {
     revokedAt: number | null;
     createdAt: number;
 }
+
+// ---------- PA & UA (P2-2): GET /reports/availability ----------
+export type AvailabilityBucket = 'total' | 'day' | 'month';
+
+// PA = (T − BD) / T, UA = Working / (T − BD), MA = Working / (Working + BD), EU = Working / T (persen).
+export interface AvailabilityRow {
+    key: string; // imei | jenis unit | "all"
+    label: string;
+    unitType?: UnitType;
+    period?: string; // YYYY-MM-DD | YYYY-MM, kosong = seluruh periode
+    units: number;
+    totalMs: number;
+    workingMs: number;
+    standbyPlannedMs: number;
+    standbyUnplannedMs: number;
+    breakdownMs: number;
+    noStatusMs: number; // waktu tanpa status (dihitung tersedia, bukan working)
+    pa: number | null;
+    ua: number | null;
+    ma: number | null;
+    eu: number | null;
+}
+
+export interface AvailabilityReport {
+    from: number;
+    to: number;
+    bucket: AvailabilityBucket;
+    units: AvailabilityRow[];
+    types: AvailabilityRow[];
+    total: AvailabilityRow[];
+}
