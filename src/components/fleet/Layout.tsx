@@ -15,6 +15,7 @@ import { usePathname } from 'next/navigation';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
     Activity,
+    Shuffle,
     Bell,
     CalendarClock,
     ChartColumn,
@@ -105,6 +106,14 @@ const NAV: {
         need: [P.deviceRead],
         group: 'Operasional',
         bottom: true,
+    },
+    {
+        to: '/dispatch',
+        label: 'Panel dispatcher',
+        short: 'Dispatch',
+        icon: Shuffle,
+        need: [P.shiftRead, P.reportRead],
+        group: 'Operasional',
     },
     { to: '/live', label: 'Live (GPRS)', icon: Radio, need: [P.deviceRead], group: 'Operasional' },
     {

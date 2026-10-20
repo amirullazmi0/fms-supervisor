@@ -35,6 +35,7 @@ export const P = {
     delayCodeManage: 'delay_code.manage',
     mdtManage: 'mdt.manage',
     unitStatusWrite: 'unit_status.write',
+    dispatchManage: 'dispatch.manage',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

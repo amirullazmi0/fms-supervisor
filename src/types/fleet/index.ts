@@ -479,7 +479,8 @@ export type StreamMsg =
     | { type: 'event'; event: FleetEvent }
     | ({ type: 'command' } & CommandLine)
     | { type: 'log'; entry: LogEntry }
-    | { type: 'unit_status'; imei: string }; // status unit berubah (MDT / supervisor)
+    | { type: 'unit_status'; imei: string } // status unit berubah (MDT / supervisor)
+    | { type: 'dispatch' }; // excavator fleet berubah
 
 // ---------- Produksi, status unit, MDT ----------
 
@@ -646,4 +647,66 @@ export interface DeviceInstall {
     name: string | null;
     installedAt: number;
     removedAt: number | null;
+}
+
+// ---------- Panel dispatcher (P2-5 … P2-7): GET /dispatch/fleets ----------
+export interface FleetLoader {
+    id: string;
+    routeId: string;
+    imei: string;
+    label: string;
+    productivityTph: number | null; // ton per jam
+    startAt: number;
+    endAt: number | null;
+}
+
+export interface FleetTruck {
+    imei: string;
+    label: string;
+    driverName: string;
+    category: DelayCategory | '';
+    status: string | null; // nama delay code
+    atFront: boolean; // di radius front loading, diam
+    gpsAgeMs: number | null;
+    inactive?: string; // alasan tidak produksi (kosong = aktif)
+}
+
+export type MatchClass = 'under' | 'match' | 'over' | '';
+
+// MF = (DT aktif × waktu muat) ÷ (excavator × cycle time DT).
+export interface Fleet {
+    routeId: string;
+    routeName: string;
+    loadingName: string;
+    unloadingName: string;
+    loader: FleetLoader | null;
+    trucks: FleetTruck[];
+    active: number;
+    loadTimeMs: number;
+    cycleMs: number;
+    basisWindow: string; // "3 jam" | "7 hari" | "perkiraan"
+    matchFactor: number | null;
+    match: MatchClass;
+    idealTrucks: number | null;
+    queue: number;
+    hangingMs: number | null;
+    hangingWindow: number;
+}
+
+export interface FleetMove {
+    imei: string;
+    label: string;
+    fromRouteId: string;
+    fromRouteName: string;
+    toRouteId: string;
+    toRouteName: string;
+    fromMfAfter: number | null;
+    toMfAfter: number | null;
+    text: string;
+}
+
+export interface DispatchBoard {
+    at: number;
+    fleets: Fleet[];
+    moves: FleetMove[];
 }

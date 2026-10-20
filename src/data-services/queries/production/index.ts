@@ -6,6 +6,7 @@ export type ProductionQueryKeys =
     | 'reports-freshness'
     | 'reports-stages'
     | 'reports-availability'
+    | 'dispatch-fleets'
     | 'production-targets'
     | 'delay-codes'
     | 'unit-status'
@@ -17,6 +18,7 @@ export const productionQueries: QueriesDataService<ProductionQueryKeys> = {
     'reports-freshness': '/reports/freshness',
     'reports-stages': '/reports/stages',
     'reports-availability': '/reports/availability',
+    'dispatch-fleets': '/dispatch/fleets',
     'production-targets': '/production-targets',
     'delay-codes': '/delay-codes',
     'unit-status': '/unit-status',

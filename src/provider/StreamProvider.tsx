@@ -143,7 +143,11 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
                         'sites',
                         'routes',
                         'shifts-by-id',
+                        'dispatch-fleets',
                     );
+                    break;
+                case 'dispatch':
+                    refetch('dispatch-fleets');
                     break;
                 case 'sites':
                     refetch('sites', 'routes');
@@ -163,7 +167,7 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
                     );
                     break;
                 case 'unit_status':
-                    refetch('unit-status', 'unit-status-current');
+                    refetch('unit-status', 'unit-status-current', 'dispatch-fleets');
                     break;
                 case 'device':
                     queryClient.setQueryData<R<Device[]>>(KEY.devices, (old) => {

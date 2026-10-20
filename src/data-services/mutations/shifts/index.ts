@@ -17,12 +17,24 @@ export type ShiftsMutationKeys =
     | 'assignments-delete'
     | 'shift-templates-create'
     | 'shift-templates-update'
-    | 'shift-templates-delete';
+    | 'shift-templates-delete'
+    | 'dispatch-loader'
+    | 'dispatch-move';
 
 // Anything touching a shift can change who is on duty (routes/sites carry onDuty).
 const SHIFT_VIEWS: AllQueryKeys[] = ['shifts', 'shifts-by-id', 'routes', 'sites', 'drivers-last'];
 
 export const shiftsMutations: MutationDataService<ShiftsMutationKeys> = {
+    'dispatch-loader': {
+        url: '/dispatch/fleets/:id/loader',
+        method: 'PUT',
+        refetchQueries: ['dispatch-fleets'],
+    },
+    'dispatch-move': {
+        url: '/dispatch/move',
+        method: 'POST',
+        refetchQueries: ['dispatch-fleets', ...SHIFT_VIEWS],
+    },
     'shift-templates-create': {
         url: '/shift-templates',
         method: 'POST',
