@@ -48,6 +48,8 @@ export interface Device {
     // Info kendaraan (diisi dari dashboard)
     plate: string | null;
     vehicle: string | null;
+    payloadTon: number; // truck factor: ton per rit
+    unitType: UnitType;
     online: boolean;
     remote: string | null;
     connectedAt: number | null;
@@ -173,8 +175,22 @@ export interface Site {
     radius: number; // meter
     note: string | null;
     imeis: string[]; // truk yang lagi bertugas (shift aktif) di rute yang lewat titik ini
+    queueAlertTrucks?: number; // alert antrean: >= sekian unit antre...
+    queueAlertMin?: number; // ...lebih dari sekian menit
+    zones?: SiteZone[];
     createdAt: number;
     updatedAt: number;
+}
+
+// Zona di sekitar titik: antre (jalur tunggu) atau spot (posisi muat / dumping).
+export type ZoneKind = 'queue' | 'spot';
+
+export interface SiteZone {
+    id?: string;
+    kind: ZoneKind;
+    lat: number;
+    lng: number;
+    radius: number; // meter
 }
 
 // Jalur jalan antar dua titik (dari OSRM). paths[0] = jalur utama, sisanya alternatif.
@@ -319,6 +335,7 @@ export interface Driver {
     ibutton: string | null; // ID iButton (hex) kalau supir pakai kunci iButton FMC150
     active: boolean;
     note: string | null;
+    hasPin?: boolean; // bisa login di tablet MDT
     createdAt: number;
     updatedAt: number;
 }
@@ -399,7 +416,7 @@ export interface TripRecord {
     status: 'done' | 'unfinished';
 }
 
-export type ReportGroup = 'route' | 'driver' | 'truck' | 'shift' | 'day';
+export type ReportGroup = 'route' | 'driver' | 'truck' | 'shift' | 'day' | 'hour';
 
 // trips/done/avg/min/max = jalan berangkat (loading → unloading). Jarak, berhenti, BBM total = dua arah.
 export interface ReportRow {
@@ -423,6 +440,9 @@ export interface ReportRow {
     avgFuel: number | null;
     avgFuelAtLoading: number | null;
     avgFuelAtUnloading: number | null;
+    ton: number; // tonase = ritase selesai × truck factor
+    cycleMs: number; // waktu siklus (dasar jam kerja)
+    tonPerHour: number; // produktivitas
 }
 
 export interface Report {
@@ -445,4 +465,131 @@ export type StreamMsg =
     | { type: 'point'; imei: string; point: HistoryPoint }
     | { type: 'event'; event: FleetEvent }
     | ({ type: 'command' } & CommandLine)
-    | { type: 'log'; entry: LogEntry };
+    | { type: 'log'; entry: LogEntry }
+    | { type: 'unit_status'; imei: string }; // status unit berubah (MDT / supervisor)
+
+// ---------- Produksi, status unit, MDT ----------
+
+export type UnitType = 'DT' | 'EX' | 'LV' | 'SUPPORT';
+export type UnitStatus = 'working' | 'standby' | 'breakdown';
+export type DelayCategory = 'working' | 'standby_planned' | 'standby_unplanned' | 'breakdown';
+
+export interface DelayCode {
+    code: string;
+    name: string;
+    category: DelayCategory;
+    status: UnitStatus;
+    icon: string | null;
+    sort: number;
+    active: boolean;
+}
+
+export interface UnitStatusLog {
+    id: string;
+    imei: string;
+    truck: string;
+    driverId: string | null;
+    driverName: string | null;
+    status: UnitStatus;
+    delayCode: string | null;
+    delayName: string | null;
+    category: DelayCategory | null;
+    startAt: number;
+    endAt: number | null;
+    source: 'auto' | 'supervisor' | 'dmr' | 'mdt';
+    note: string | null;
+    receivedAt: number;
+}
+
+// Jam: berjalan (belum lewat), sementara (ada truk yang datanya belum masuk sampai akhir jam), final.
+export type HourStatus = 'berjalan' | 'sementara' | 'final';
+
+export interface PendingUnit {
+    imei: string;
+    truck: string;
+    lastGpsAt: number | null;
+}
+
+export interface HourlyRow {
+    key: string;
+    label: string;
+    date: string;
+    start: number;
+    end: number;
+    rit: number;
+    ton: number;
+    targetRit: number;
+    targetTon: number;
+    achievement: number | null;
+    status: HourStatus;
+    units: number;
+    pending: PendingUnit[];
+}
+
+export interface HourlyReport {
+    from: number;
+    to: number;
+    rows: HourlyRow[];
+    total: HourlyRow;
+}
+
+export interface Freshness {
+    imei: string;
+    truck: string;
+    lastGpsAt: number | null;
+    lastReceivedAt: number | null;
+    avgDelayMs: number;
+    maxDelayMs: number;
+    lateRecords: number;
+    records: number;
+}
+
+export interface StageStats {
+    visits: number;
+    avgQueueMs: number;
+    avgSpotMs: number | null;
+    avgWorkMs: number;
+    avgDwellMs: number;
+}
+
+export interface StageRow {
+    routeId: string;
+    routeName: string;
+    loading: StageStats;
+    haulingMs: number;
+    haulingCount: number;
+    unloading: StageStats;
+    returningMs: number;
+    returningCount: number;
+    cycleMs: number;
+    ritPerHour: number;
+}
+
+export interface StageReport {
+    from: number;
+    to: number;
+    rows: StageRow[];
+}
+
+export interface ProductionTarget {
+    id: string;
+    routeId: string;
+    routeName: string;
+    ritPerHour: number | null;
+    tonPerHour: number | null;
+    ritPerShift: number | null;
+    tonPerShift: number | null;
+    validFrom: string;
+    note: string | null;
+    updatedAt: number;
+}
+
+export interface MdtTablet {
+    id: string;
+    imei: string;
+    name: string | null;
+    pairedAt: number | null;
+    lastSyncAt: number | null;
+    revokedAt: number | null;
+    createdAt: number;
+}

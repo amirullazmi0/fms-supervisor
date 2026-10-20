@@ -1,0 +1,23 @@
+import { QueriesDataService } from '@/data-services/type';
+
+// Produksi per jam, target, kesegaran data, status unit (MDT / supervisor), tablet MDT.
+export type ProductionQueryKeys =
+    | 'reports-hourly'
+    | 'reports-freshness'
+    | 'reports-stages'
+    | 'production-targets'
+    | 'delay-codes'
+    | 'unit-status'
+    | 'unit-status-current'
+    | 'devices-mdt';
+
+export const productionQueries: QueriesDataService<ProductionQueryKeys> = {
+    'reports-hourly': '/reports/hourly',
+    'reports-freshness': '/reports/freshness',
+    'reports-stages': '/reports/stages',
+    'production-targets': '/production-targets',
+    'delay-codes': '/delay-codes',
+    'unit-status': '/unit-status',
+    'unit-status-current': '/unit-status/current',
+    'devices-mdt': '/devices/:imei/mdt',
+};

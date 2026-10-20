@@ -157,7 +157,13 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
                         'reports-visits-list',
                         'shifts-by-id',
                         'routes',
+                        'reports-hourly',
+                        'reports-stages',
+                        'production-targets',
                     );
+                    break;
+                case 'unit_status':
+                    refetch('unit-status', 'unit-status-current');
                     break;
                 case 'device':
                     queryClient.setQueryData<R<Device[]>>(KEY.devices, (old) => {

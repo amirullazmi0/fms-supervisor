@@ -5,6 +5,7 @@ import { monitorQueries, MonitorQueryKeys } from './monitor';
 import { sitesQueries, SitesQueryKeys } from './sites';
 import { shiftsQueries, ShiftsQueryKeys } from './shifts';
 import { reportsQueries, ReportsQueryKeys } from './reports';
+import { productionQueries, ProductionQueryKeys } from './production';
 
 export type AllQueryKeys =
     | AuthQueryKeys
@@ -12,7 +13,8 @@ export type AllQueryKeys =
     | MonitorQueryKeys
     | SitesQueryKeys
     | ShiftsQueryKeys
-    | ReportsQueryKeys;
+    | ReportsQueryKeys
+    | ProductionQueryKeys;
 
 export const allQueries: QueriesDataService<AllQueryKeys> = {
     ...authQueries,
@@ -21,4 +23,5 @@ export const allQueries: QueriesDataService<AllQueryKeys> = {
     ...sitesQueries,
     ...shiftsQueries,
     ...reportsQueries,
+    ...productionQueries,
 };

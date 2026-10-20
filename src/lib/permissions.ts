@@ -28,6 +28,10 @@ export const P = {
     shiftOperate: 'shift.operate',
     assignmentManage: 'assignment.manage',
     reportRead: 'report.read',
+    targetManage: 'target.manage',
+    delayCodeManage: 'delay_code.manage',
+    mdtManage: 'mdt.manage',
+    unitStatusWrite: 'unit_status.write',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];
