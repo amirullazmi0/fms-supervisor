@@ -423,7 +423,7 @@ export function StagesPanel({ report }: { report: StageReport | null }) {
                             {
                                 label: STAGE.workDump,
                                 ms: r.unloading.avgWorkMs,
-                                color: 'color-mix(in oklab, var(--site-dumping) 45%, transparent)',
+                                color: 'color-mix(in oklab, var(--site-unloading) 45%, transparent)',
                             },
                             {
                                 label: STAGE.returning,
@@ -432,6 +432,8 @@ export function StagesPanel({ report }: { report: StageReport | null }) {
                             },
                         ].filter((p) => p.ms > 0);
                         const total = parts.reduce((s, p) => s + p.ms, 0) || 1;
+                        // Satu bar per tahap; panjang bar relatif terhadap tahap terlama di rute ini.
+                        const max = Math.max(...parts.map((p) => p.ms), 1);
                         return (
                             <div key={r.routeId}>
                                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
@@ -442,35 +444,38 @@ export function StagesPanel({ report }: { report: StageReport | null }) {
                                         {fmtDuration(r.loading.avgQueueMs + r.unloading.avgQueueMs)}
                                     </span>
                                 </div>
-                                <div className="flex h-5 overflow-hidden rounded-md">
+                                <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                                     {parts.map((p) => (
-                                        <Tip
+                                        <li
                                             key={p.label}
-                                            label={`${p.label}: ${fmtDuration(p.ms)}`}
+                                            className="grid grid-cols-[minmax(0,10rem)_1fr_auto] items-center gap-3 text-xs sm:grid-cols-[13rem_1fr_7rem]"
                                         >
-                                            <div
-                                                style={{
-                                                    width: `${(p.ms / total) * 100}%`,
-                                                    background: p.color,
-                                                }}
-                                            />
-                                        </Tip>
+                                            <span className="truncate text-muted-foreground">
+                                                {p.label}
+                                            </span>
+                                            <Tip label={`${p.label}: ${fmtDuration(p.ms)}`}>
+                                                <div className="h-3.5 overflow-hidden rounded-sm bg-muted">
+                                                    <div
+                                                        className="h-full rounded-sm"
+                                                        style={{
+                                                            width: `${(p.ms / max) * 100}%`,
+                                                            background: p.color,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </Tip>
+                                            <span className="text-right tabular-nums">
+                                                <b>{fmtDuration(p.ms)}</b>{' '}
+                                                <span className="text-muted-foreground">
+                                                    {fmtNum((p.ms / total) * 100, 0)}%
+                                                </span>
+                                            </span>
+                                        </li>
                                     ))}
-                                </div>
-                                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                    {parts.map((p) => (
-                                        <span key={p.label} className="flex items-center gap-1">
-                                            <i
-                                                className="size-2 rounded-sm"
-                                                style={{ background: p.color }}
-                                            />{' '}
-                                            {p.label} {fmtDuration(p.ms)}
-                                        </span>
-                                    ))}
-                                    <span>
-                                        · di front {fmtDuration(siteMs(r.loading))}, di dumping{' '}
-                                        {fmtDuration(siteMs(r.unloading))}
-                                    </span>
+                                </ul>
+                                <div className="mt-1.5 text-xs text-muted-foreground">
+                                    Di front {fmtDuration(siteMs(r.loading))}, di dumping{' '}
+                                    {fmtDuration(siteMs(r.unloading))}
                                 </div>
                             </div>
                         );
