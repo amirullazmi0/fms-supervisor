@@ -719,7 +719,7 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
                                   ? [
                                         [
                                             'Status',
-                                            'Shift dihentikan, menyelesaikan ritase terakhir ke dumping',
+                                            'Shift dihentikan, menyelesaikan ritase terakhir (hauling / dumping)',
                                         ],
                                     ]
                                   : []),

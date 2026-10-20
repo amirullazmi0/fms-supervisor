@@ -9,7 +9,7 @@ export interface Duty {
     driverName: string;
     routeId: string;
     routeName: string;
-    // active = sedang shift; finishing = shift sudah dihentikan, menyelesaikan ritase terakhir ke dumping.
+    // active = sedang shift; finishing = shift sudah dihentikan, menyelesaikan ritase terakhir (hauling / dumping).
     phase: 'active' | 'finishing';
 }
 

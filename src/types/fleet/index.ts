@@ -250,7 +250,7 @@ export interface OnDuty {
     driverId: string;
     driverName: string;
     imei: string;
-    // active = shift berjalan; finishing = shift sudah dihentikan, ritase terakhir masih menuju dumping;
+    // active = shift berjalan; finishing = shift sudah dihentikan, ritase terakhir masih hauling atau dumping;
     // done = shift sudah selesai (di recentDone, 12 jam terakhir).
     phase?: 'active' | 'finishing' | 'done';
     closedAt?: number | null;
