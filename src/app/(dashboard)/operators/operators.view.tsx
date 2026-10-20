@@ -1,5 +1,5 @@
 'use client';
-// Operator / driver: data karyawan yang ditugaskan di shift, plus PIN login tablet MDT.
+// Operator: data karyawan yang ditugaskan di shift, beserta PIN login tablet MDT.
 import { useEffect } from 'react';
 import DriverManager from '@/components/fleet/DriverManager';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
@@ -29,7 +29,7 @@ export default function OperatorsView() {
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 md:p-6">
             <PageHeader
                 title="Operator"
-                description="Operator / driver adalah user tipe operator: login di tablet MDT pakai NIK + PIN, bukan dashboard."
+                description="Operator adalah user bertipe operator: login di tablet MDT menggunakan NIK + PIN, bukan di dashboard."
             />
             <DriverManager canEdit={can(P.driverCreate) || can(P.driverUpdate)} />
         </div>

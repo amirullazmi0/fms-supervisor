@@ -169,14 +169,14 @@
 }
 
 /* =====================================================================
-   Peta (Leaflet). Isi penanda & popup dibikin pakai string HTML, jadi gayanya di sini.
-   Peta selalu terang, warna di sini nggak ikut tema gelap.
+   Peta (Leaflet). Isi penanda & popup dibuat dengan string HTML, jadi gayanya di sini.
+   Peta selalu terang, warna di sini tidak mengikuti tema gelap.
    ===================================================================== */
 .leaflet-container {
     font-family: var(--font-sans);
     background: #eef0f2;
 }
-/* Preflight Tailwind bikin gambar max-width 100%, ubin peta jadi rusak. */
+/* Preflight Tailwind membuat gambar max-width 100%, sehingga ubin peta rusak. */
 .leaflet-container img,
 .leaflet-container svg {
     max-width: none !important;

@@ -1,6 +1,6 @@
 'use client';
-// Laporan ritase: per rute / driver / truk / shift / hari, untuk hari ini, tanggal tertentu, atau periode.
-// Klik baris buat lihat detail ritasenya.
+// Laporan ritase: per rute / operator / unit / shift / hari, untuk hari ini, tanggal tertentu, atau periode.
+// Klik baris untuk melihat detail ritasenya.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowDown,
@@ -77,7 +77,7 @@ type SortKey =
     | 'fuelUsed'
     | 'avgFuel';
 
-// Rata-rata 1 putaran = rata-rata berangkat + rata-rata pulang (butuh dua-duanya ada).
+// Cycle time rata-rata = rata-rata hauling + rata-rata return (keduanya harus ada).
 function cycleOf(
     r: Pick<ReportRow, 'done' | 'backDone' | 'avgDurationMs' | 'backAvgMs'>,
 ): number | null {
@@ -571,7 +571,7 @@ function Detail({
                     Object.fromEntries(q),
                 ])?.meta;
                 const r = { trips: rows ?? [], total: meta?.total_data ?? rows?.length ?? 0 };
-                // Baris "tanpa driver/shift" nggak bisa difilter di server, disaring di sini.
+                // Baris "tanpa operator/shift" tidak dapat difilter di server, sehingga disaring di sini.
                 const list =
                     group === 'driver' && row.key === '-'
                         ? r.trips.filter((x) => !x.driverId)

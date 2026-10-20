@@ -43,7 +43,7 @@ export default function LiveView() {
     const [follow, setFollow] = useState(true);
     const [search, setSearch] = useState('');
 
-    // Pilih alat pertama (yang online duluan) kalau belum ada yang dipilih.
+    // Pilih alat pertama (yang online lebih dulu) bila belum ada yang dipilih.
     useEffect(() => {
         if (!selected && list.length) setSelected(list[0].imei);
     }, [list, selected]);
@@ -102,7 +102,7 @@ export default function LiveView() {
                             {filtered.length === 0 && (
                                 <li>
                                     <Empty>
-                                        {list.length ? 'Nggak ada yang cocok.' : 'Belum ada unit.'}
+                                        {list.length ? 'Tidak ada yang cocok.' : 'Belum ada unit.'}
                                     </Empty>
                                 </li>
                             )}
@@ -187,7 +187,7 @@ export default function LiveView() {
                             Belum ada unit yang kirim data
                         </h2>
                         <p className="m-0 text-sm text-muted-foreground">
-                            Setting FMC150 biar ngirim ke server ini lewat SMS (dari HP Android,
+                            Atur FMC150 agar mengirim ke server ini melalui SMS (dari HP Android,
                             diawali 2 spasi):{' '}
                             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">
                                 setparam 2004:{status?.tunnel?.host ?? '<domain>'};2005:
@@ -196,7 +196,7 @@ export default function LiveView() {
                             . Protokol TCP, Codec 8 Extended.
                         </p>
                         <p className="m-0 text-sm text-muted-foreground">
-                            Kalau mau lihat dashboard jalan dulu, jalanin simulator:{' '}
+                            Untuk mencoba dashboard terlebih dahulu, jalankan simulator:{' '}
                             <code className="font-mono text-foreground">
                                 go run ./cmd/simulator
                             </code>
@@ -230,8 +230,8 @@ function ServerCard() {
     const { status: s } = useData();
     const toast = useToast();
     if (!s) return null;
-    // Perintah SMS kalau alamat tunnel ganti. Disalin tanpa 2 spasi depan:
-    // spasinya harus diketik manual (iPhone/app chat ngebuang spasi di awal).
+    // Perintah SMS bila alamat tunnel berganti. Disalin tanpa 2 spasi depan:
+    // spasinya harus diketik manual (iPhone/aplikasi chat membuang spasi di awal).
     const sms = s.tunnel ? `setparam 2004:${s.tunnel.host};2005:${s.tunnel.port}` : null;
     const copySms = async () => {
         if (!sms) return;
@@ -239,10 +239,10 @@ function ServerCard() {
             await navigator.clipboard.writeText(sms);
             toast({
                 title: 'Perintah SMS disalin',
-                body: 'Kirim dari HP Android ke nomor SIM alat. Ketik 2 spasi dulu, baru tempel.',
+                body: 'Kirim dari HP Android ke nomor SIM alat. Ketik 2 spasi terlebih dahulu, lalu tempel.',
             });
         } catch {
-            toast({ title: 'Nggak bisa nyalin otomatis', body: sms, level: 'warn' });
+            toast({ title: 'Tidak dapat menyalin otomatis', body: sms, level: 'warn' });
         }
     };
     return (
@@ -271,7 +271,7 @@ function ServerCard() {
                         <span className="flex flex-col items-start gap-1">
                             <Badge variant="warning">Tunnel mati</Badge>
                             <span className="text-xs text-muted-foreground">
-                                Alat cuma bisa konek dari jaringan lokal.
+                                Alat hanya dapat terhubung dari jaringan lokal.
                             </span>
                         </span>
                     ) : (
@@ -280,8 +280,8 @@ function ServerCard() {
                                 &lt;IP/domain server&gt;:{s.devicePort}
                             </b>
                             <span className="text-xs text-muted-foreground">
-                                tanpa tunnel, alat konek langsung ke server. Isi TUNNEL_HOST di
-                                backend biar alamatnya tampil di sini.
+                                tanpa tunnel, alat terhubung langsung ke server. Isi TUNNEL_HOST di
+                                backend agar alamatnya tampil di sini.
                             </span>
                         </span>
                     )}
@@ -289,7 +289,7 @@ function ServerCard() {
                 {sms && (
                     <div className="flex flex-col gap-1.5 rounded-lg bg-muted p-2.5">
                         <span className="text-xs text-muted-foreground">
-                            SMS ke alat (kirim ulang kalau alamat berubah)
+                            SMS ke alat (kirim ulang bila alamat berubah)
                         </span>
                         <span className="break-all font-mono text-xs">
                             <Tip label="2 spasi, ketik manual">

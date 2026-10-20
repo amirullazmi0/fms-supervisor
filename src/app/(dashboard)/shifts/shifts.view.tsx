@@ -1,6 +1,6 @@
 'use client';
-// Shift kerja: supervisor bikin shift (pagi/sore/…) untuk satu rute, bagi driver + truk, lalu nutup shift.
-// Ritase tiap driver dihitung otomatis dari GPS selama shift jalan.
+// Shift kerja: supervisor membuat shift (pagi/sore/…) untuk satu rute, membagi operator + unit, lalu menutup shift.
+// Ritase tiap operator dihitung otomatis dari GPS selama shift berjalan.
 import { useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -56,7 +56,7 @@ const STATUS: Record<Shift['status'] | 'overdue', { label: string; variant: Badg
 };
 const statusOf = (s: Shift) => STATUS[s.overdue ? 'overdue' : s.status];
 
-// Driver yang masih bertugas (penugasan belum ditutup), dihitung unik.
+// Operator yang masih bertugas (penugasan belum ditutup), dihitung unik.
 const onDuty = (s: Shift) =>
     new Set(s.assignments.filter((a) => a.endAt == null).map((a) => a.driverId)).size;
 
@@ -88,16 +88,16 @@ export default function ShiftsView() {
     const [mobileDetail, setMobileDetail] = useState(() => selected != null); // dibuka dari link ?shift= = langsung detail
     const setCreating = (v: boolean) => void setCreatingQ(v ? '1' : null);
 
-    // Shift tanggal yang dipilih (+ yang masih aktif dari tanggal lain). Stream 'shifts' bikin refetch.
+    // Shift tanggal yang dipilih (+ yang masih aktif dari tanggal lain). Stream 'shifts' memicu refetch.
     const listQuery = useQueryApiRequest<GlobalApiResponse<Shift[]>>({
         key: 'shifts',
         queries: { from: date, to: date },
     });
     const list = listQuery.data?.data ?? [];
 
-    // Pilih otomatis: shift aktif, kalau nggak ada yang pertama.
+    // Pilih otomatis: shift aktif, bila tidak ada maka yang pertama.
     useEffect(() => {
-        // Tunggu data dulu, biar ?shift= dari link nggak kehapus waktu daftar masih kosong.
+        // Tunggu data terlebih dahulu agar ?shift= dari tautan tidak terhapus saat daftar masih kosong.
         if (!listQuery.isSuccess) return;
         if (
             selected &&
@@ -325,7 +325,7 @@ function ShiftList({
     );
 }
 
-// ---------- Bikin / ubah shift (dialog) ----------
+// ---------- Buat / ubah shift (dialog) ----------
 function ShiftForm({
     open,
     onOpenChange,
@@ -430,7 +430,7 @@ function ShiftForm({
             onSaved(made[0]);
         } catch (err) {
             toast({
-                title: shift ? 'Gagal ngubah shift' : 'Gagal bikin shift',
+                title: shift ? 'Gagal mengubah shift' : 'Gagal membuat shift',
                 body: errText(err),
                 level: 'crit',
             });
@@ -496,7 +496,9 @@ function ShiftForm({
                         <Field
                             label="Rute / fleet"
                             hint={
-                                started ? 'Rute nggak bisa diganti setelah shift mulai.' : undefined
+                                started
+                                    ? 'Rute tidak dapat diganti setelah shift dimulai.'
+                                    : undefined
                             }
                         >
                             <Combobox
@@ -505,7 +507,7 @@ function ShiftForm({
                                 options={routes.map((x) => ({ value: x.id, label: x.name }))}
                                 placeholder="Pilih rute…"
                                 searchPlaceholder="Cari rute…"
-                                empty="Belum ada rute. Bikin di menu Front, dumping & rute."
+                                empty="Belum ada rute. Buat di menu Front, dumping & rute."
                                 disabled={started}
                                 aria-label="Rute"
                             />
@@ -535,7 +537,7 @@ function ShiftForm({
                             </legend>
                             {routes.length === 0 ? (
                                 <Note tone="warning">
-                                    Belum ada rute. Bikin di menu Front, dumping & rute.
+                                    Belum ada rute. Buat di menu Front, dumping & rute.
                                 </Note>
                             ) : (
                                 <div className="grid max-h-44 gap-1.5 overflow-y-auto sm:grid-cols-2">
@@ -638,7 +640,7 @@ function ShiftForm({
                             <span className="text-xs font-normal text-muted-foreground">
                                 {form.autoClose
                                     ? 'Shift selesai sendiri. Bisa diperpanjang sebelum itu.'
-                                    : 'Shift jalan terus sampai ditutup manual. Lewat jam muncul peringatan.'}
+                                    : 'Shift terus berjalan sampai ditutup manual. Bila melewati jam selesai, muncul peringatan.'}
                             </span>
                         </span>
                         <Switch
@@ -669,8 +671,8 @@ function ShiftForm({
                                 : shift
                                   ? 'Simpan'
                                   : form.routeIds.length > 1
-                                    ? `Bikin ${form.routeIds.length} shift`
-                                    : 'Bikin shift'}
+                                    ? `Buat ${form.routeIds.length} shift`
+                                    : 'Buat shift'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -832,9 +834,9 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => void act('reopen', 'Shift dibuka lagi')}
+                                    onClick={() => void act('reopen', 'Shift dibuka kembali')}
                                 >
-                                    <RotateCcw /> Buka lagi
+                                    <RotateCcw /> Buka kembali
                                 </Button>
                             )}
                             {canOperate && s.status === 'active' && (
@@ -880,8 +882,8 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
                 {s.note && <Empty>{s.note}</Empty>}
                 {s.overdue && (
                     <Note>
-                        Shift udah lewat jam selesai ({fmtHm(s.plannedEnd)}) dan masih jalan. Tutup
-                        atau perpanjang.
+                        Shift sudah melewati jam selesai ({fmtHm(s.plannedEnd)}) dan masih berjalan.
+                        Tutup atau perpanjang.
                     </Note>
                 )}
             </Card>
@@ -892,17 +894,17 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
             >
                 <Stat label="Operator bertugas" value={onDuty(s)} />
                 <Stat
-                    label="Ritase (berangkat)"
+                    label="Ritase (hauling)"
                     value={done.length}
-                    sub={`${back.length} pulang${running ? ` · ${running} lagi jalan` : ''}`}
+                    sub={`${back.length} return${running ? ` · ${running} sedang berjalan` : ''}`}
                 />
                 <Stat
-                    label="Rata-rata berangkat"
+                    label="Rata-rata hauling"
                     value={done.length ? fmtDuration(avg) : '—'}
                     sub={r ? `${r.from} → ${r.to}` : undefined}
                 />
                 <Stat
-                    label="Rata-rata pulang"
+                    label="Rata-rata return"
                     value={back.length ? fmtDuration(backAvg) : '—'}
                     sub={r ? `${r.to} → ${r.from}` : undefined}
                 />
@@ -932,7 +934,7 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
                 open={confirm === 'close'}
                 onOpenChange={(o) => !o && setConfirm(null)}
                 title={`Selesaikan shift ${s.name}?`}
-                description="Ritase yang udah berangkat sebelum ditutup tetap dihitung ke shift ini walau sampainya belakangan."
+                description="Ritase yang sudah berangkat sebelum shift ditutup tetap dihitung ke shift ini meskipun tiba belakangan."
                 confirmLabel="Ya, selesai"
                 destructive
                 onConfirm={() => void act('close', 'Shift selesai')}

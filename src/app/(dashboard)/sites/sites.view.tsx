@@ -1,9 +1,9 @@
 'use client';
 // Titik & rute.
 //   Titik : master titik (gudang, pelabuhan, …) — tempat + radius (default 10 m), tanpa jenis.
-//   Rute  : pilih titik mana yang jadi loading dan mana yang jadi unloading. Satu titik bisa jadi
-//           loading di rute A dan unloading di rute B. Driver & truk masuk ke rute lewat penugasan shift.
-// User biasa cuma bisa lihat.
+//   Rute  : pilih titik mana yang menjadi front loading dan mana yang menjadi dumping. Satu titik bisa
+//           menjadi front loading di rute A dan dumping di rute B. Operator & unit masuk ke rute lewat penugasan shift.
+// User biasa hanya dapat melihat.
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
@@ -108,19 +108,19 @@ export default function SitesView() {
     const { setStats } = useLayout();
     const can = useCan();
     const fetchApi = useFetchApi();
-    // Boleh naruh/ngubah titik & rute (permission role, dicek ulang di server).
+    // Boleh menambah/mengubah titik & rute (permission role, diperiksa ulang di server).
     const isAdmin = can(P.siteCreate) || can(P.siteUpdate);
     const canRoutes = can(P.routeCreate) || can(P.routeUpdate);
 
     const [tab, setTab] = useState<Tab>('sites');
     const [siteId, setSiteId] = useState<string | null>(null);
     const [routeId, setRouteId] = useState<string | null>(null);
-    // Form titik (draft di peta) dan form rute. editing* = id yang diubah, null = bikin baru.
+    // Form titik (draft di peta) dan form rute. editing* = id yang diubah, null = membuat baru.
     const [siteForm, setSiteForm] = useState<SiteForm | null>(null);
     const [editingSite, setEditingSite] = useState<string | null>(null);
     const [routeForm, setRouteForm] = useState<RouteForm | null>(null);
     const [editingRoute, setEditingRoute] = useState<string | null>(null);
-    // Zona antre & spot titik yang dipilih (adding = jenis zona yang ditaruh di klik peta berikutnya).
+    // Zona antre & spot titik yang dipilih (adding = jenis zona yang dipasang pada klik peta berikutnya).
     const [zoneEdit, setZoneEdit] = useState<ZoneEdit | null>(null);
 
     const trucks = useMemo(
@@ -172,12 +172,12 @@ export default function SitesView() {
     // Klik penanda titik di peta
     const selectSite = (id: string) => {
         if (siteForm) closeSite();
-        if (routeForm) return; // lagi bikin rute: penanda cuma buat lihat info
+        if (routeForm) return; // sedang membuat rute: penanda hanya untuk melihat info
         setTab('sites');
         setSiteId(id);
     };
 
-    // Klik peta / geser penanda: cuma naruh titik waktu lagi bikin/ubah titik (biar nggak kepencet nggak sengaja).
+    // Klik peta / geser penanda: hanya memasang titik saat sedang membuat/mengubah titik (agar tidak terpencet tanpa sengaja).
     const pick = (lat: number, lng: number) => {
         if (isAdmin && zoneEdit?.adding) {
             const zone: SiteZone = {
@@ -192,7 +192,7 @@ export default function SitesView() {
         if (isAdmin && siteForm) setSiteForm({ ...siteForm, lat, lng });
     };
 
-    // Peta: rute yang lagi dipilih/diedit digambar garis loading → unloading.
+    // Peta: rute yang sedang dipilih/diedit digambar sebagai garis front loading → dumping.
     const activeRoute = routeForm
         ? { loadingId: routeForm.loadingId, unloadingId: routeForm.unloadingId }
         : tab === 'routes'
@@ -201,7 +201,7 @@ export default function SitesView() {
     const lineFrom = activeRoute ? siteById.get(activeRoute.loadingId) : undefined;
     const lineTo = activeRoute ? siteById.get(activeRoute.unloadingId) : undefined;
     const routeLine = lineFrom && lineTo ? { from: lineFrom, to: lineTo } : null;
-    // Peran titik di rute yang lagi dipilih/diedit (L/U di penanda peta).
+    // Peran titik di rute yang sedang dipilih/diedit (L/U di penanda peta).
     const roleKey = activeRoute ? `${activeRoute.loadingId}|${activeRoute.unloadingId}` : '';
     const roles = useMemo(() => {
         const m = new Map<string, SiteType>();
@@ -236,7 +236,7 @@ export default function SitesView() {
             alive = false;
         };
     }, [roadKey, fetchApi]);
-    // Jalur pulang (unloading → loading) dihitung terpisah: jalan satu arah bisa beda.
+    // Jalur return (dumping → front loading) dihitung terpisah: jalan satu arah bisa berbeda.
     const [roadBack, setRoadBack] = useState<RoadState>({
         loading: false,
         data: null,
@@ -262,7 +262,7 @@ export default function SitesView() {
             alive = false;
         };
     }, [roadKey, fetchApi]);
-    // Jalur asli dari ritase truk (cuma rute yang udah disimpan, dan titiknya belum diganti di form).
+    // Jalur aktual dari ritase unit (hanya rute yang sudah disimpan dan titiknya belum diganti di form).
     const savedRoute = routeForm
         ? routes.find((r) => r.id === editingRoute)
         : tab === 'routes'
@@ -304,17 +304,17 @@ export default function SitesView() {
     const placing = isAdmin && (siteForm != null || Boolean(zoneEdit?.adding));
     const tip = zoneEdit
         ? zoneEdit.adding
-            ? `Klik peta buat naruh ${ZONE_KIND[zoneEdit.adding].label.toLowerCase()}`
-            : 'Geser penanda A (antre) / S (spot) buat mindahin zona'
+            ? `Klik peta untuk memasang ${ZONE_KIND[zoneEdit.adding].label.toLowerCase()}`
+            : 'Geser penanda A (antre) / S (spot) untuk memindahkan zona'
         : siteForm
           ? siteForm.lat == null
-              ? 'Klik peta buat naruh titik, atau ketik lat/lng'
-              : 'Klik peta atau geser penanda buat mindahin titik'
+              ? 'Klik peta untuk memasang titik, atau ketik lat/lng'
+              : 'Klik peta atau geser penanda untuk memindahkan titik'
           : routeForm
             ? 'Pilih front loading & dumping di panel kiri'
             : isAdmin
-              ? 'Klik penanda/peta buat lihat info · "+ Titik" buat naruh titik baru'
-              : 'Klik penanda atau peta buat lihat info';
+              ? 'Klik penanda/peta untuk melihat info · "+ Titik" untuk menambah titik baru'
+              : 'Klik penanda atau peta untuk melihat info';
 
     return (
         <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-[380px_minmax(0,1fr)]">
@@ -498,7 +498,7 @@ function SitesPanel({
     const shown = sites.filter((s) => !q || s.name.toLowerCase().includes(q.toLowerCase()));
     const selected = sites.find((s) => s.id === selectedId) ?? null;
     const usedBy = (id: string) => routes.filter((r) => r.loadingId === id || r.unloadingId === id);
-    // "loading di 2 rute · unloading di 1 rute"
+    // "front loading di 2 rute · dumping di 1 rute"
     const roleText = (id: string) => {
         const l = routes.filter((r) => r.loadingId === id).length;
         const u = routes.filter((r) => r.unloadingId === id).length;
@@ -539,17 +539,17 @@ function SitesPanel({
             </div>
             <Empty className="text-xs">
                 Master titik: front loading (pit), dumping / disposal, tongkang (jetty), garasi,
-                dll. Mana yang jadi loading / dumping ditentuin di tab Rute.
+                dll. Peran front loading / dumping ditentukan di tab Rute.
             </Empty>
 
             {sites.length === 0 ? (
                 <Empty>
                     {isAdmin
                         ? 'Belum ada titik. Tekan "+ Titik", lalu klik peta atau ketik lat/lng.'
-                        : 'Belum ada titik. Minta admin buat naruh titik.'}
+                        : 'Belum ada titik. Minta admin untuk menambahkan titik.'}
                 </Empty>
             ) : shown.length === 0 ? (
-                <Empty>Nggak ada titik yang cocok.</Empty>
+                <Empty>Tidak ada titik yang cocok.</Empty>
             ) : (
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                     {shown.map((s) => {
@@ -645,7 +645,7 @@ function SitesPanel({
                     </div>
                 </div>
             )}
-            {!isAdmin && <Empty className="text-xs">Akun ini cuma bisa lihat titik.</Empty>}
+            {!isAdmin && <Empty className="text-xs">Akun ini hanya dapat melihat titik.</Empty>}
         </>
     );
 }
@@ -690,7 +690,7 @@ function SiteFormView({
     });
     const [saving, setSaving] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
-    // Teks input lat/lng (boleh setengah jadi waktu diketik). Ikut ke-update kalau titik dipindah lewat peta.
+    // Teks input lat/lng (boleh belum lengkap saat diketik). Ikut diperbarui bila titik dipindah melalui peta.
     const [coord, setCoord] = useState({ lat: '', lng: '' });
     const [coordError, setCoordError] = useState<string | null>(null);
     const { lat: formLat, lng: formLng } = form;
@@ -712,7 +712,7 @@ function SiteFormView({
 
     const set = <K extends keyof SiteForm>(k: K, v: SiteForm[K]) => setForm({ ...form, [k]: v });
 
-    // Ketik lat/lng. Tempel "-6.2, 106.8" (format Google Maps) di kolom mana aja = dua-duanya keisi.
+    // Ketik lat/lng. Tempel "-6.2, 106.8" (format Google Maps) di kolom mana saja = keduanya terisi.
     const typeCoord = (k: 'lat' | 'lng', text: string) => {
         const pair = /^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/.exec(text);
         const next = pair ? { lat: pair[1], lng: pair[2] } : { ...coord, [k]: text.trim() };
@@ -739,7 +739,7 @@ function SiteFormView({
         e.preventDefault();
         if (form.lat == null || form.lng == null) {
             toast({
-                title: 'Titik belum ditaruh',
+                title: 'Titik belum dipasang',
                 body: 'Klik peta, ketik lat/lng, atau pakai posisi unit.',
                 level: 'warn',
             });
@@ -757,7 +757,7 @@ function SiteFormView({
             });
             onSaved(saved);
         } catch (err) {
-            toast({ title: 'Gagal nyimpen titik', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan titik', body: errText(err), level: 'crit' });
         } finally {
             setSaving(false);
         }
@@ -770,7 +770,7 @@ function SiteFormView({
             toast({ title: 'Titik dihapus', body: form.name, level: 'warn' });
             onClose();
         } catch (err) {
-            toast({ title: 'Gagal ngehapus', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menghapus', body: errText(err), level: 'crit' });
         }
     };
 
@@ -853,8 +853,8 @@ function SiteFormView({
             </Field>
             {form.radius < 15 && (
                 <Note>
-                    Akurasi GPS 3–10 m. Dengan radius {form.radius} m truk yang udah di dalam kadang
-                    kebaca di luar; naikin kalau kunjungan sering kelewat.
+                    Akurasi GPS 3–10 m. Dengan radius {form.radius} m unit yang sudah berada di
+                    dalam terkadang terbaca di luar; perbesar radius bila kunjungan sering terlewat.
                 </Note>
             )}
 
@@ -892,7 +892,7 @@ function SiteFormView({
                 title={`Hapus titik ${form.name}?`}
                 description={
                     usedBy.length
-                        ? `Titik ini dipakai rute ${usedBy.map((r) => r.name).join(', ')}, jadi nggak bisa dihapus sebelum rutenya diubah.`
+                        ? `Titik ini dipakai rute ${usedBy.map((r) => r.name).join(', ')}, sehingga tidak dapat dihapus sebelum rutenya diubah.`
                         : 'Titik ini belum dipakai rute.'
                 }
                 confirmLabel="Hapus"
@@ -955,7 +955,7 @@ function ZoneEditor({
             });
             onClose();
         } catch (err) {
-            toast({ title: 'Gagal nyimpen zona', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan zona', body: errText(err), level: 'crit' });
         }
     };
 
@@ -982,7 +982,7 @@ function ZoneEditor({
             </div>
             {edit.adding && (
                 <p className="m-0 text-xs text-muted-foreground">
-                    Klik peta buat naruh {ZONE_KIND[edit.adding].label.toLowerCase()}.
+                    Klik peta untuk memasang {ZONE_KIND[edit.adding].label.toLowerCase()}.
                 </p>
             )}
             {edit.zones.length === 0 ? (
@@ -1037,7 +1037,7 @@ function ZoneEditor({
                 </ul>
             )}
             <div className="grid grid-cols-2 gap-3">
-                <Field label="Alert: jumlah unit antre" hint="Notifikasi kalau sebanyak ini…">
+                <Field label="Alert: jumlah unit antre" hint="Notifikasi bila mencapai jumlah ini…">
                     <Input
                         type="number"
                         min={1}
@@ -1100,7 +1100,7 @@ interface RoutesPanelProps {
 
 function RoutesPanel(p: RoutesPanelProps) {
     const { isAdmin, sites, siteById, routes, devices, selectedId, onSelect, form } = p;
-    // Titik apa aja bisa jadi loading atau unloading; perannya ditentuin di rute.
+    // Titik mana pun bisa menjadi front loading atau dumping; perannya ditentukan di rute.
     const loadings = sites;
     const unloadings = sites;
     const selected = routes.find((r) => r.id === selectedId) ?? null;
@@ -1113,7 +1113,7 @@ function RoutesPanel(p: RoutesPanelProps) {
         <>
             <div className="flex items-center justify-between gap-2">
                 <Empty className="text-xs">
-                    1 rute = pilih 1 titik buat loading + 1 titik buat unloading.
+                    1 rute = pilih 1 titik front loading + 1 titik dumping.
                 </Empty>
                 {isAdmin && (
                     <Button size="sm" onClick={p.onNew} disabled={sites.length < 2}>
@@ -1123,7 +1123,7 @@ function RoutesPanel(p: RoutesPanelProps) {
             </div>
             {sites.length < 2 && (
                 <Note tone="info">
-                    Bikin minimal 2 titik dulu di tab{' '}
+                    Buat minimal 2 titik terlebih dahulu di tab{' '}
                     <button type="button" className="font-semibold underline" onClick={p.onGoSites}>
                         Titik
                     </button>
@@ -1163,8 +1163,8 @@ function RoutesPanel(p: RoutesPanelProps) {
                                         )}
                                     >
                                         {r.onDuty.length
-                                            ? `${r.onDuty.length} operator lagi jalan · ${[...new Set(r.onDuty.map((x) => x.shiftName))].join(', ')}`
-                                            : 'Nggak ada yang jalan sekarang'}
+                                            ? `${r.onDuty.length} operator sedang bertugas · ${[...new Set(r.onDuty.map((x) => x.shiftName))].join(', ')}`
+                                            : 'Tidak ada yang bertugas saat ini'}
                                     </span>
                                 </button>
                             </li>
@@ -1206,7 +1206,7 @@ function RoutesPanel(p: RoutesPanelProps) {
                     />
                     <div className="flex flex-col gap-1.5">
                         <span className="text-xs font-semibold text-muted-foreground">
-                            Lagi jalan
+                            Sedang bertugas
                         </span>
                         {selected.onDuty.length ? (
                             <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[13px]">
@@ -1224,15 +1224,15 @@ function RoutesPanel(p: RoutesPanelProps) {
                             </ul>
                         ) : (
                             <Empty className="text-xs">
-                                Nggak ada shift aktif di rute ini. Driver &amp; truk dibagi di menu
-                                Shift.
+                                Tidak ada shift aktif di rute ini. Operator &amp; unit dibagi di
+                                menu Shift.
                             </Empty>
                         )}
                     </div>
                     {p.roadInfo}
                 </div>
             )}
-            {!isAdmin && <Empty className="text-xs">Akun ini cuma bisa lihat rute.</Empty>}
+            {!isAdmin && <Empty className="text-xs">Akun ini hanya dapat melihat rute.</Empty>}
         </>
     );
 }
@@ -1267,7 +1267,7 @@ function RouteFormView({
     const [confirmDelete, setConfirmDelete] = useState(false);
     const set = <K extends keyof RouteForm>(k: K, v: RouteForm[K]) => setForm({ ...form, [k]: v });
 
-    // Nama otomatis "Loading → Unloading" kalau belum diisi sendiri.
+    // Nama otomatis "Front loading → Dumping" bila belum diisi.
     const autoName = (l: string, u: string) => {
         const a = loadings.find((s) => s.id === l)?.name;
         const b = unloadings.find((s) => s.id === u)?.name;
@@ -1296,7 +1296,7 @@ function RouteFormView({
             });
             onSaved(saved);
         } catch (err) {
-            toast({ title: 'Gagal nyimpen rute', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan rute', body: errText(err), level: 'crit' });
         } finally {
             setSaving(false);
         }
@@ -1309,7 +1309,7 @@ function RouteFormView({
             toast({ title: 'Rute dihapus', body: form.name, level: 'warn' });
             onClose();
         } catch (err) {
-            toast({ title: 'Gagal ngehapus', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menghapus', body: errText(err), level: 'crit' });
         }
     };
 
@@ -1329,7 +1329,7 @@ function RouteFormView({
                     options={loadings
                         .filter((s) => s.id !== form.unloadingId)
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
-                    placeholder="Pilih titik buat loading…"
+                    placeholder="Pilih titik front loading…"
                     searchPlaceholder="Cari titik…"
                     aria-label="Front loading"
                 />
@@ -1347,7 +1347,7 @@ function RouteFormView({
                     options={unloadings
                         .filter((s) => s.id !== form.loadingId)
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
-                    placeholder="Pilih titik buat dumping…"
+                    placeholder="Pilih titik dumping…"
                     searchPlaceholder="Cari titik…"
                     aria-label="Titik dumping"
                 />
@@ -1364,7 +1364,7 @@ function RouteFormView({
                 />
             </Field>
             <Note tone="info">
-                Driver &amp; truk nggak dipasang di sini, tapi dibagi tiap shift di menu Shift.
+                Operator &amp; unit tidak dipasang di sini, tetapi dibagi per shift di menu Shift.
             </Note>
             <Field label="Catatan">
                 <Textarea
@@ -1396,7 +1396,7 @@ function RouteFormView({
                 open={confirmDelete}
                 onOpenChange={setConfirmDelete}
                 title={`Hapus rute ${form.name}?`}
-                description="Rute yang udah pernah dipakai shift nggak bisa dihapus."
+                description="Rute yang sudah pernah dipakai shift tidak dapat dihapus."
                 confirmLabel="Hapus"
                 destructive
                 onConfirm={() => void remove()}

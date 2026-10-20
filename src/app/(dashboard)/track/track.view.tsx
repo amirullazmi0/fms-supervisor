@@ -1,6 +1,6 @@
 'use client';
-// Lacak truk: daftar armada (dengan progres rute loading → unloading) + peta penuh
-// dengan kartu detail mengambang (info, driver, perjalanan, ritase, sensor) dan putar ulang rute.
+// Lacak unit: daftar armada (dengan progres rute front loading → dumping) + peta penuh
+// dengan kartu detail mengambang (info, operator, perjalanan, ritase, sensor) dan putar ulang rute.
 import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -55,7 +55,7 @@ const SPEEDS = ['1', '4', '16'];
 
 type FleetTab = 'all' | 'duty' | 'idle';
 
-// Posisi truk di antara titik loading dan unloading rutenya: 0 = di loading, 1 = di unloading.
+// Posisi unit di antara front loading dan dumping rutenya: 0 = di front loading, 1 = di dumping.
 function progressOf(d: Device, from: Site | undefined, to: Site | undefined): number | null {
     if (!d.pos || !from || !to) return null;
     const a = distanceM(d.pos, from);
@@ -82,8 +82,8 @@ export default function TrackView() {
     const [basemap, setBasemap] = useState<Basemap>('map');
     const [showRoutes, setShowRoutes] = useState(true);
     const duty = useDuty();
-    // Urutan tetap biar kartu nggak loncat-loncat tiap ada data masuk:
-    // yang lagi di shift di atas, lalu yang online, lalu offline; di dalamnya urut nama/plat.
+    // Urutan tetap agar kartu tidak berpindah-pindah setiap ada data masuk:
+    // yang sedang bertugas di atas, lalu yang online, lalu offline; di dalamnya urut nama/plat.
     const list = useMemo(() => {
         const rank = (x: Device) => (duty.has(x.imei) ? 0 : statusOf(x) !== 'offline' ? 1 : 2);
         return Object.values(devices).sort(
@@ -108,7 +108,7 @@ export default function TrackView() {
         };
     };
 
-    // Titik dari rute-rute truk yang dipilih, plus perannya (loading/unloading) di rute itu.
+    // Titik dari rute-rute unit yang dipilih, beserta perannya (front loading / dumping) di rute itu.
     const { truckSites, siteRoles } = useMemo(() => {
         const roles = new Map<string, 'loading' | 'unloading'>();
         if (selected) {
@@ -120,7 +120,7 @@ export default function TrackView() {
         return { truckSites: sites.filter((x) => roles.has(x.id)), siteRoles: roles };
     }, [sites, routes, selected]);
 
-    // Garis jalan rute truk: jejak ritase terakhir. Belum pernah jalan = garis lurus loading -> unloading.
+    // Garis jalan rute unit: jejak ritase terakhir. Belum pernah berjalan = garis lurus front loading -> dumping.
     const truckRoutes = useMemo(
         () => (selected ? routes.filter((r) => r.imeis.includes(selected)) : []),
         [routes, selected],
@@ -194,7 +194,7 @@ export default function TrackView() {
         if (selected) void load(selected, date, false);
     }, [selected, date, load]);
 
-    // Hari ini: muat ulang waktu ada titik baru, dan tiap 30 detik (nama jalan nyusul dari server).
+    // Hari ini: muat ulang saat ada titik baru, dan setiap 30 detik (nama jalan menyusul dari server).
     const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useStream((msg) => {
         if (msg.type !== 'point' || msg.imei !== selected || !isToday) return;
@@ -264,7 +264,7 @@ export default function TrackView() {
     const tabs: { id: FleetTab; label: string; n: number }[] = [
         { id: 'all', label: 'Semua', n: list.length },
         { id: 'duty', label: 'Bertugas', n: nDuty },
-        { id: 'idle', label: 'Nganggur', n: list.length - nDuty },
+        { id: 'idle', label: 'Tidak bertugas', n: list.length - nDuty },
     ];
     const ends = d ? endsOf(d.imei) : { from: undefined, to: undefined };
 
@@ -299,8 +299,8 @@ export default function TrackView() {
 
                 {ready && list.length === 0 && (
                     <Empty>
-                        Belum ada unit yang terdaftar. Buat contoh, jalanin{' '}
-                        <code className="font-mono">go run ./cmd/simulator</code>. Alamat buat alat
+                        Belum ada unit yang terdaftar. Untuk contoh, jalankan{' '}
+                        <code className="font-mono">go run ./cmd/simulator</code>. Alamat untuk alat
                         asli:{' '}
                         <span className="font-mono">
                             {status?.tunnel
@@ -311,7 +311,7 @@ export default function TrackView() {
                         </span>
                     </Empty>
                 )}
-                {list.length > 0 && shown.length === 0 && <Empty>Nggak ada unit yang cocok.</Empty>}
+                {list.length > 0 && shown.length === 0 && <Empty>Tidak ada unit yang cocok.</Empty>}
 
                 <ul className="m-0 flex list-none gap-2.5 overflow-x-auto p-0 pb-1 max-lg:snap-x max-lg:snap-mandatory lg:flex-col lg:overflow-visible lg:pb-0">
                     {shown.map((x) => (
@@ -373,7 +373,7 @@ export default function TrackView() {
                             <Layers /> <span className="max-sm:hidden">Lapisan</span>
                         </Button>
                     </Tip>
-                    <Tip label="Peta ngikutin unit yang dipilih">
+                    <Tip label="Peta mengikuti unit yang dipilih">
                         <Button
                             variant="outline"
                             className={cn('shadow-lg', follow && 'border-ring')}
@@ -468,7 +468,7 @@ export default function TrackView() {
     );
 }
 
-// ---------- Kartu truk di daftar ----------
+// ---------- Kartu unit di daftar ----------
 function FleetCard({
     d,
     job,
@@ -569,7 +569,7 @@ function DetailCard(props: DetailProps) {
             await navigator.clipboard.writeText(d.imei);
             toast({ title: 'IMEI disalin', body: d.imei });
         } catch {
-            toast({ title: 'Gagal nyalin', body: d.imei, level: 'warn' });
+            toast({ title: 'Gagal menyalin', body: d.imei, level: 'warn' });
         }
     };
 
@@ -664,7 +664,7 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
     const fuelPct = n(89);
     const p = job ? progressOf(d, from, to) : null;
 
-    // Nama jalan posisi sekarang (server nyari ke OpenStreetMap, jadi bisa nyusul).
+    // Nama jalan posisi sekarang (server mencari ke OpenStreetMap, jadi bisa menyusul).
     const posKey = d.pos ? `${d.pos.lat.toFixed(4)},${d.pos.lng.toFixed(4)}` : '';
     useEffect(() => {
         if (!d.pos) return;
@@ -719,7 +719,7 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
                                   ? [
                                         [
                                             'Status',
-                                            'Shift distop, nyelesaiin ritase terakhir ke unloading',
+                                            'Shift dihentikan, menyelesaikan ritase terakhir ke dumping',
                                         ],
                                     ]
                                   : []),
@@ -736,7 +736,7 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
             <div className="grid grid-cols-3 gap-2" aria-label="Kondisi unit">
                 <Mini
                     label="Mesin"
-                    value={d.io[239] == null ? '—' : d.io[239] ? 'Nyala' : 'Mati'}
+                    value={d.io[239] == null ? '—' : d.io[239] ? 'Menyala' : 'Mati'}
                 />
                 <Mini label="Aki" value={ext == null ? '—' : `${fmtNum(ext / 1000, 1)} V`} />
                 <Mini label="Sinyal" value={gsm == null ? '—' : `${gsm}/5`} />
@@ -766,8 +766,8 @@ function DriverTab({ job }: { job: Duty | undefined }) {
     if (!job)
         return (
             <Empty>
-                Unit ini lagi nganggur. Operator muncul di sini kalau truknya ditugaskan di shift
-                yang lagi jalan (menu Shift).
+                Unit ini sedang tidak bertugas. Operator tampil di sini bila unit ditugaskan di
+                shift yang sedang berjalan (menu Shift).
             </Empty>
         );
     const dr = drivers.find((x) => x.id === job.driverId);
@@ -836,7 +836,7 @@ function TripTab({ day, loading, date, isToday, onDate, focus, onFocus }: Detail
             {loading && !day ? (
                 <Empty>Memuat perjalanan…</Empty>
             ) : !day || day.points.length === 0 ? (
-                <Empty>Nggak ada data posisi di tanggal ini.</Empty>
+                <Empty>Tidak ada data posisi pada tanggal ini.</Empty>
             ) : (
                 <>
                     <div className="grid grid-cols-2 gap-2">
@@ -847,7 +847,7 @@ function TripTab({ day, loading, date, isToday, onDate, focus, onFocus }: Detail
                             value={fmtDuration(day.stoppedMs)}
                             sub={
                                 day.idleMs > 0
-                                    ? `${fmtDuration(day.idleMs)} mesin nyala`
+                                    ? `${fmtDuration(day.idleMs)} mesin menyala`
                                     : undefined
                             }
                         />
@@ -915,7 +915,7 @@ function TripTab({ day, loading, date, isToday, onDate, focus, onFocus }: Detail
 
 function segTitle(seg: TripSegment): string {
     if (seg.type === 'trip') return `Jalan ${fmtKm(seg.distance)} km`;
-    return seg.idle ? 'Berhenti, mesin nyala' : 'Berhenti';
+    return seg.idle ? 'Berhenti, mesin menyala' : 'Berhenti';
 }
 
 function segSub(seg: TripSegment, fuelUnit: 'L' | '%' | null): string {
@@ -929,17 +929,17 @@ function segSub(seg: TripSegment, fuelUnit: 'L' | '%' | null): string {
     return `${dur}${seg.place ? ` · ${seg.place}` : ''}`;
 }
 
-// Status kerja truk (Bertugas / Menyelesaikan ritase / Selesai / Nganggur).
+// Status kerja unit (Bertugas / Menyelesaikan ritase / Selesai / Tidak bertugas).
 function WorkBadge({ imei, job }: { imei: string; job: Duty | undefined }) {
     const done = useDone().get(imei);
     const w = workState(job, done);
     return <Badge variant={w.variant}>{w.label}</Badge>;
 }
 
-// Truk tanpa tugas: "Selesai · shift X" kalau shift-nya baru beres, kalau nggak "Nganggur".
+// Unit tanpa tugas: "Selesai · shift X" bila shift-nya baru selesai, selain itu "Tidak bertugas".
 function IdleText({ imei, long = false }: { imei: string; long?: boolean }) {
     const done = useDone().get(imei);
-    if (!done) return <span className="text-muted-foreground">Nganggur</span>;
+    if (!done) return <span className="text-muted-foreground">Tidak bertugas</span>;
     const at = done.closedAt
         ? new Date(done.closedAt).toLocaleTimeString('id-ID', {
               hour: '2-digit',
@@ -949,7 +949,7 @@ function IdleText({ imei, long = false }: { imei: string; long?: boolean }) {
     return (
         <span>
             {long
-                ? `Selesai · ${done.shiftName} (${done.routeName}${at ? `, beres ${at}` : ''})`
+                ? `Selesai · ${done.shiftName} (${done.routeName}${at ? `, selesai ${at}` : ''})`
                 : `Selesai · ${done.shiftName}`}
         </span>
     );

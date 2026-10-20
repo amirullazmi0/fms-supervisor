@@ -1,7 +1,7 @@
 'use client';
-// Armada: daftar semua truk, pilih satu buat lihat kondisinya (sama kayak Live: CAN, riwayat,
+// Armada: daftar semua unit, pilih satu untuk melihat kondisinya (sama seperti Live: CAN, riwayat,
 // event, kirim perintah, IO) + data mentah (semua paket IO / CAN yang disimpan) per tanggal.
-// Truk yang dipilih & tanggalnya disimpan di URL (?imei=&date=). Buka menu = truk paling atas.
+// Unit yang dipilih & tanggalnya disimpan di URL (?imei=&date=). Buka menu = unit paling atas.
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -58,7 +58,7 @@ export default function FleetView() {
     );
     const all = Object.values(devices);
     const online = all.filter((d) => d.online).length;
-    // Belum milih (baru buka menu): pilih truk paling atas di daftar. Di HP tetap mulai dari daftar.
+    // Belum memilih (baru membuka menu): pilih unit paling atas di daftar. Di HP tetap mulai dari daftar.
     useEffect(() => {
         if (imei || !list.length || window.matchMedia('(max-width: 767px)').matches) return;
         void setImei(list[0].imei, { history: 'replace' });
@@ -110,14 +110,14 @@ export default function FleetView() {
                                             ? `${j.driverName} · ${j.routeName}${j.phase === 'finishing' ? ' · menyelesaikan ritase' : ''}`
                                             : doneMap.get(x.imei)
                                               ? `Selesai · ${doneMap.get(x.imei)!.shiftName}`
-                                              : 'Nganggur'}{' '}
+                                              : 'Tidak bertugas'}{' '}
                                         · {ago(lastHeard(x))}
                                     </span>
                                 </button>
                             </li>
                         );
                     })}
-                    {list.length === 0 && <Empty>Nggak ada unit yang cocok.</Empty>}
+                    {list.length === 0 && <Empty>Tidak ada unit yang cocok.</Empty>}
                 </ul>
             </aside>
 
@@ -128,7 +128,9 @@ export default function FleetView() {
                 )}
             >
                 {!d ? (
-                    <Empty className="m-auto">Pilih unit di kiri buat lihat data mentahnya.</Empty>
+                    <Empty className="m-auto">
+                        Pilih unit di kiri untuk melihat data mentahnya.
+                    </Empty>
                 ) : (
                     <>
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -194,16 +196,16 @@ export default function FleetView() {
                                 <>
                                     <b>{job.driverName}</b> · {job.routeName} ({job.shiftName})
                                     {job.phase === 'finishing'
-                                        ? ' · shift distop, nyelesaiin ritase terakhir'
+                                        ? ' · shift dihentikan, menyelesaikan ritase terakhir'
                                         : ''}
                                     .
                                 </>
                             ) : doneMap.get(d.imei) ? (
                                 <>
-                                    Shift <b>{doneMap.get(d.imei)!.shiftName}</b> udah beres.
+                                    Shift <b>{doneMap.get(d.imei)!.shiftName}</b> sudah selesai.
                                 </>
                             ) : (
-                                'Nggak ada tugas shift sekarang.'
+                                'Tidak ada tugas shift saat ini.'
                             )}{' '}
                             Terdaftar{' '}
                             {d.firstSeen

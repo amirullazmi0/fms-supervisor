@@ -34,7 +34,7 @@ export default function SignInView() {
                         </span>
                         <h1 className="m-0 text-3xl font-bold tracking-tight">Selamat datang</h1>
                         <p className="m-0 text-sm text-muted-foreground">
-                            Masuk ke FMS Supervisor buat lanjut.
+                            Masuk ke FMS Supervisor untuk melanjutkan.
                         </p>
                     </div>
 
@@ -120,7 +120,7 @@ export default function SignInView() {
                             <span className="h-px flex-1 bg-border" />
                         </div>
                         <p className="m-0 text-center text-xs text-muted-foreground">
-                            Akun dibikin admin. Lupa password? Hubungi admin FMS.
+                            Akun dibuat oleh admin. Lupa password? Hubungi admin FMS.
                         </p>
                     </div>
                 </form>

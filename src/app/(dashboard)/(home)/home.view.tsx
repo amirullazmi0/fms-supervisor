@@ -1,5 +1,5 @@
 'use client';
-// Beranda dispatcher: satu layar buat mantau. Produksi hari ini vs target, shift berjalan, papan
+// Beranda dispatcher: satu layar untuk memantau. Produksi hari ini vs target, shift berjalan, papan
 // unit (working / antre / standby / BD / tanpa data) dengan aktivitas & lokasi, dan alert yang perlu
 // ditindak. Semua dari data yang sudah ada (useData + laporan per jam + status MDT).
 import { useEffect, useMemo, useState } from 'react';
@@ -47,7 +47,7 @@ export default function HomeView() {
 
     const today = dateKey();
     const queries = useMemo(
-        // to kosong = sampai sekarang (server), jadi kunci query nggak berubah tiap detik.
+        // to kosong = sampai sekarang (server), jadi kunci query tidak berubah setiap detik.
         () => ({ from: new Date(`${today}T00:00:00`).getTime() }),
         [today],
     );
@@ -265,7 +265,7 @@ export default function HomeView() {
                             Unit muncul di sini setelah ditugaskan di shift yang berjalan.
                         </EmptyState>
                     ) : shown.length === 0 ? (
-                        <EmptyState title="Nggak ada unit di kolom ini" />
+                        <EmptyState title="Tidak ada unit di kolom ini" />
                     ) : (
                         <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
                             {shown.map((u) => (
@@ -300,12 +300,12 @@ export default function HomeView() {
                         {active.length === 0 ? (
                             <EmptyState
                                 icon={Clock3}
-                                title="Nggak ada shift berjalan"
+                                title="Tidak ada shift berjalan"
                                 className="py-5"
                             >
                                 {planned.length
                                     ? `${planned.length} shift terjadwal hari ini.`
-                                    : 'Buat shift dulu buat mulai penugasan.'}
+                                    : 'Buat shift terlebih dahulu untuk memulai penugasan.'}
                             </EmptyState>
                         ) : (
                             <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -325,7 +325,8 @@ export default function HomeView() {
                     <Panel title="Perlu ditindak" hint="3 jam terakhir">
                         {alerts.length === 0 ? (
                             <EmptyState icon={AlertTriangle} title="Aman" className="py-5">
-                                Nggak ada antrean, breakdown, atau unit telat kirim data.
+                                Tidak ada antrean, breakdown, atau unit yang terlambat mengirim
+                                data.
                             </EmptyState>
                         ) : (
                             <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
