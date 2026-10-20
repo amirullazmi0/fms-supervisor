@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
     ArrowLeft,
+    Layers,
     MapPin,
     MousePointerClick,
     Pencil,
@@ -16,6 +17,7 @@ import {
     Trash2,
     Truck,
 } from 'lucide-react';
+import { ZONE_KIND } from '@/lib/labels';
 import SitesMap from '@/components/fleet/SitesMap';
 import RoadInfo from '@/components/fleet/RoadInfo';
 import type { RoadState } from '@/components/fleet/RoadInfo';
@@ -39,9 +41,33 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Empty, KV, Note, RoutePair, SiteDot } from '@/components/ui/misc';
 import { distanceM } from '@/lib/geo';
-import type { Device, RoadRoute, Route, RouteHistory, Site, SiteType } from '@/types/fleet';
+import type {
+    Device,
+    RoadRoute,
+    Route,
+    RouteHistory,
+    Site,
+    SiteType,
+    SiteZone,
+    ZoneKind,
+} from '@/types/fleet';
 
 type Tab = 'sites' | 'routes';
+
+interface ZoneEdit {
+    siteId: string;
+    zones: SiteZone[];
+    adding: ZoneKind | null;
+    queueAlertTrucks: number;
+    queueAlertMin: number;
+}
+
+function zoneSummary(s: Site): string {
+    const q = (s.zones ?? []).filter((z) => z.kind === 'queue').length;
+    const sp = (s.zones ?? []).filter((z) => z.kind === 'spot').length;
+    if (!q && !sp) return 'Belum ada (antre = diam sebelum masuk radius)';
+    return [q && `${q} antre`, sp && `${sp} spot`].filter(Boolean).join(' · ');
+}
 
 interface SiteForm extends Draft {
     note: string;
@@ -94,6 +120,8 @@ export default function SitesView() {
     const [editingSite, setEditingSite] = useState<string | null>(null);
     const [routeForm, setRouteForm] = useState<RouteForm | null>(null);
     const [editingRoute, setEditingRoute] = useState<string | null>(null);
+    // Zona antre & spot titik yang dipilih (adding = jenis zona yang ditaruh di klik peta berikutnya).
+    const [zoneEdit, setZoneEdit] = useState<ZoneEdit | null>(null);
 
     const trucks = useMemo(
         () => Object.values(devices).sort((a, b) => truckLabel(a).localeCompare(truckLabel(b))),
@@ -120,6 +148,7 @@ export default function SitesView() {
     const closeSite = () => {
         setSiteForm(null);
         setEditingSite(null);
+        setZoneEdit(null);
     };
     const closeRoute = () => {
         setRouteForm(null);
@@ -150,6 +179,16 @@ export default function SitesView() {
 
     // Klik peta / geser penanda: cuma naruh titik waktu lagi bikin/ubah titik (biar nggak kepencet nggak sengaja).
     const pick = (lat: number, lng: number) => {
+        if (isAdmin && zoneEdit?.adding) {
+            const zone: SiteZone = {
+                kind: zoneEdit.adding,
+                lat,
+                lng,
+                radius: zoneEdit.adding === 'queue' ? 25 : 12,
+            };
+            setZoneEdit({ ...zoneEdit, zones: [...zoneEdit.zones, zone], adding: null });
+            return;
+        }
         if (isAdmin && siteForm) setSiteForm({ ...siteForm, lat, lng });
     };
 
@@ -262,16 +301,20 @@ export default function SitesView() {
             />
         ) : null;
 
-    const placing = isAdmin && siteForm != null;
-    const tip = siteForm
-        ? siteForm.lat == null
-            ? 'Klik peta buat naruh titik, atau ketik lat/lng'
-            : 'Klik peta atau geser penanda buat mindahin titik'
-        : routeForm
-          ? 'Pilih titik loading & unloading di panel kiri'
-          : isAdmin
-            ? 'Klik penanda/peta buat lihat info · "+ Titik" buat naruh titik baru'
-            : 'Klik penanda atau peta buat lihat info';
+    const placing = isAdmin && (siteForm != null || Boolean(zoneEdit?.adding));
+    const tip = zoneEdit
+        ? zoneEdit.adding
+            ? `Klik peta buat naruh ${ZONE_KIND[zoneEdit.adding].label.toLowerCase()}`
+            : 'Geser penanda A (antre) / S (spot) buat mindahin zona'
+        : siteForm
+          ? siteForm.lat == null
+              ? 'Klik peta buat naruh titik, atau ketik lat/lng'
+              : 'Klik peta atau geser penanda buat mindahin titik'
+          : routeForm
+            ? 'Pilih front loading & dumping di panel kiri'
+            : isAdmin
+              ? 'Klik penanda/peta buat lihat info · "+ Titik" buat naruh titik baru'
+              : 'Klik penanda atau peta buat lihat info';
 
     return (
         <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-[380px_minmax(0,1fr)]">
@@ -296,7 +339,14 @@ export default function SitesView() {
                     </TabsList>
                 </Tabs>
 
-                {tab === 'sites' ? (
+                {tab === 'sites' && zoneEdit ? (
+                    <ZoneEditor
+                        site={siteById.get(zoneEdit.siteId) ?? null}
+                        edit={zoneEdit}
+                        setEdit={setZoneEdit}
+                        onClose={() => setZoneEdit(null)}
+                    />
+                ) : tab === 'sites' ? (
                     <SitesPanel
                         isAdmin={isAdmin}
                         sites={sites}
@@ -313,6 +363,16 @@ export default function SitesView() {
                             setSiteId(s.id);
                             setEditingSite(s.id);
                             setSiteForm(siteFormOf(s));
+                        }}
+                        onZones={(s) => {
+                            setSiteId(s.id);
+                            setZoneEdit({
+                                siteId: s.id,
+                                zones: (s.zones ?? []).map((z) => ({ ...z })),
+                                adding: null,
+                                queueAlertTrucks: s.queueAlertTrucks ?? 3,
+                                queueAlertMin: s.queueAlertMin ?? 15,
+                            });
                         }}
                         onClose={closeSite}
                         onSaved={(s) => {
@@ -377,6 +437,16 @@ export default function SitesView() {
                         onSelect={selectSite}
                         onPick={pick}
                         canEdit={placing}
+                        zoneEdit={zoneEdit}
+                        onZoneMove={(i, lat, lng) =>
+                            zoneEdit &&
+                            setZoneEdit({
+                                ...zoneEdit,
+                                zones: zoneEdit.zones.map((z, k) =>
+                                    k === i ? { ...z, lat, lng } : z,
+                                ),
+                            })
+                        }
                     />
                 </div>
                 <div className="pointer-events-none absolute bottom-6 left-1/2 z-[1000] flex max-w-[calc(100%-3rem)] -translate-x-1/2 items-center gap-2 rounded-full border bg-card px-3.5 py-1.5 text-xs text-muted-foreground shadow-lg max-sm:hidden">
@@ -402,6 +472,7 @@ interface SitesPanelProps {
     editingId: string | null;
     onNew: () => void;
     onEdit: (s: Site) => void;
+    onZones: (s: Site) => void;
     onClose: () => void;
     onSaved: (s: Site) => void;
 }
@@ -419,6 +490,7 @@ function SitesPanel({
     editingId,
     onNew,
     onEdit,
+    onZones,
     onClose,
     onSaved,
 }: SitesPanelProps) {
@@ -430,7 +502,7 @@ function SitesPanel({
     const roleText = (id: string) => {
         const l = routes.filter((r) => r.loadingId === id).length;
         const u = routes.filter((r) => r.unloadingId === id).length;
-        const parts = [l && `loading di ${l} rute`, u && `unloading di ${u} rute`].filter(Boolean);
+        const parts = [l && `loading di ${l} rute`, u && `dumping di ${u} rute`].filter(Boolean);
         return parts.length ? parts.join(' · ') : 'belum dipakai rute';
     };
 
@@ -466,8 +538,8 @@ function SitesPanel({
                 )}
             </div>
             <Empty className="text-xs">
-                Master titik: gudang, pelabuhan, pabrik, dll. Mana yang jadi loading/unloading
-                ditentuin di tab Rute.
+                Master titik: front loading (pit), dumping / disposal, tongkang (jetty), garasi,
+                dll. Mana yang jadi loading / dumping ditentuin di tab Rute.
             </Empty>
 
             {sites.length === 0 ? (
@@ -527,11 +599,26 @@ function SitesPanel({
                                     {selected.lat.toFixed(6)}, {selected.lng.toFixed(6)}
                                 </span>,
                             ],
+                            ['Zona', zoneSummary(selected)],
+                            [
+                                'Alert antrean',
+                                `≥ ${selected.queueAlertTrucks ?? 3} unit antre > ${selected.queueAlertMin ?? 15} mnt`,
+                            ],
                             ...(selected.note
                                 ? ([['Catatan', selected.note]] as [string, string][])
                                 : []),
                         ]}
                     />
+                    {isAdmin && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="self-start"
+                            onClick={() => onZones(selected)}
+                        >
+                            <Layers /> Atur zona antre & spot
+                        </Button>
+                    )}
                     <div className="flex flex-col gap-1.5">
                         <span className="text-xs font-semibold text-muted-foreground">
                             Dipakai di rute
@@ -653,7 +740,7 @@ function SiteFormView({
         if (form.lat == null || form.lng == null) {
             toast({
                 title: 'Titik belum ditaruh',
-                body: 'Klik peta, ketik lat/lng, atau pakai posisi truk.',
+                body: 'Klik peta, ketik lat/lng, atau pakai posisi unit.',
                 level: 'warn',
             });
             return;
@@ -745,11 +832,11 @@ function SiteFormView({
                             label: truckLabel(d),
                             hint: d.vehicle ?? undefined,
                         }))}
-                    placeholder="Pakai posisi truk sekarang…"
+                    placeholder="Pakai posisi unit sekarang…"
                     searchPlaceholder="Cari plat…"
-                    empty="Belum ada truk yang punya posisi."
+                    empty="Belum ada unit yang punya posisi."
                     icon={<Truck className="size-4 text-muted-foreground" />}
-                    aria-label="Pakai posisi truk sekarang"
+                    aria-label="Pakai posisi unit sekarang"
                 />
             </fieldset>
 
@@ -830,6 +917,164 @@ function FormHead({ title, onBack }: { title: string; onBack: () => void }) {
             </Button>
             <h3 className="m-0 text-base font-semibold">{title}</h3>
         </div>
+    );
+}
+
+// ---------- Zona antre & spot (P1-5, P1-6) ----------
+function ZoneEditor({
+    site,
+    edit,
+    setEdit,
+    onClose,
+}: {
+    site: Site | null;
+    edit: ZoneEdit;
+    setEdit: (e: ZoneEdit) => void;
+    onClose: () => void;
+}) {
+    const toast = useToast();
+    const save = useMutationApiRequest<GlobalApiResponse<Site>, object>({
+        key: 'sites-zones',
+        params: { id: edit.siteId },
+        config: SILENT,
+    });
+    const setZone = (i: number, z: Partial<SiteZone>) =>
+        setEdit({ ...edit, zones: edit.zones.map((x, k) => (k === i ? { ...x, ...z } : x)) });
+
+    const submit = async (e: FormEvent) => {
+        e.preventDefault();
+        try {
+            await save.mutateAsync({
+                queueAlertTrucks: edit.queueAlertTrucks,
+                queueAlertMin: edit.queueAlertMin,
+                zones: edit.zones.map(({ kind, lat, lng, radius }) => ({ kind, lat, lng, radius })),
+            });
+            toast({
+                title: 'Zona disimpan',
+                body: `${site?.name ?? 'Titik'}: ${edit.zones.length} zona. Ritase berikutnya dihitung pakai zona ini.`,
+            });
+            onClose();
+        } catch (err) {
+            toast({ title: 'Gagal nyimpen zona', body: errText(err), level: 'crit' });
+        }
+    };
+
+    return (
+        <form className="flex flex-col gap-4" onSubmit={(e) => void submit(e)}>
+            <FormHead title={`Zona: ${site?.name ?? ''}`} onBack={onClose} />
+            <Note tone="info">
+                Pisahkan waktu <b>antre</b> dari <b>muat / dumping</b>. Zona antre = jalur tunggu
+                (boleh di luar radius titik). Zona spot = posisi alat muat / dumping. Tanpa zona,
+                antre = waktu unit diam tepat sebelum masuk radius.
+            </Note>
+            <div className="flex gap-2">
+                {(['queue', 'spot'] as ZoneKind[]).map((k) => (
+                    <Button
+                        key={k}
+                        type="button"
+                        variant={edit.adding === k ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setEdit({ ...edit, adding: edit.adding === k ? null : k })}
+                    >
+                        <Plus /> {ZONE_KIND[k].label}
+                    </Button>
+                ))}
+            </div>
+            {edit.adding && (
+                <p className="m-0 text-xs text-muted-foreground">
+                    Klik peta buat naruh {ZONE_KIND[edit.adding].label.toLowerCase()}.
+                </p>
+            )}
+            {edit.zones.length === 0 ? (
+                <Empty className="text-xs">Belum ada zona.</Empty>
+            ) : (
+                <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {edit.zones.map((z, i) => (
+                        <li key={i} className="flex items-center gap-2 rounded-xl border p-2.5">
+                            <i
+                                className="size-3 shrink-0 rounded-full"
+                                style={{ background: ZONE_KIND[z.kind].color }}
+                            />
+                            <span className="min-w-0 flex-1">
+                                <b className="block text-sm">{ZONE_KIND[z.kind].label}</b>
+                                <span className="block font-mono text-[11px] text-muted-foreground">
+                                    {z.lat.toFixed(5)}, {z.lng.toFixed(5)}
+                                </span>
+                            </span>
+                            <Input
+                                type="number"
+                                min={3}
+                                max={1000}
+                                value={z.radius}
+                                onChange={(e) =>
+                                    setZone(i, {
+                                        radius: Math.max(
+                                            3,
+                                            Math.min(1000, Number(e.target.value) || 0),
+                                        ),
+                                    })
+                                }
+                                className="w-20"
+                                aria-label="Radius (m)"
+                            />
+                            <span className="text-xs text-muted-foreground">m</span>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label="Hapus zona"
+                                onClick={() =>
+                                    setEdit({
+                                        ...edit,
+                                        zones: edit.zones.filter((_, k) => k !== i),
+                                    })
+                                }
+                            >
+                                <Trash2 />
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+                <Field label="Alert: jumlah unit antre" hint="Notifikasi kalau sebanyak ini…">
+                    <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={edit.queueAlertTrucks}
+                        onChange={(e) =>
+                            setEdit({
+                                ...edit,
+                                queueAlertTrucks: Math.max(1, Number(e.target.value) || 1),
+                            })
+                        }
+                    />
+                </Field>
+                <Field label="…antre lebih dari (menit)">
+                    <Input
+                        type="number"
+                        min={1}
+                        max={600}
+                        value={edit.queueAlertMin}
+                        onChange={(e) =>
+                            setEdit({
+                                ...edit,
+                                queueAlertMin: Math.max(1, Number(e.target.value) || 1),
+                            })
+                        }
+                    />
+                </Field>
+            </div>
+            <div className="flex gap-2">
+                <Button type="submit" disabled={save.isPending}>
+                    {save.isPending ? 'Menyimpan…' : 'Simpan zona'}
+                </Button>
+                <Button type="button" variant="outline" onClick={onClose}>
+                    Batal
+                </Button>
+            </div>
+        </form>
     );
 }
 
@@ -918,7 +1163,7 @@ function RoutesPanel(p: RoutesPanelProps) {
                                         )}
                                     >
                                         {r.onDuty.length
-                                            ? `${r.onDuty.length} driver lagi jalan · ${[...new Set(r.onDuty.map((x) => x.shiftName))].join(', ')}`
+                                            ? `${r.onDuty.length} operator lagi jalan · ${[...new Set(r.onDuty.map((x) => x.shiftName))].join(', ')}`
                                             : 'Nggak ada yang jalan sekarang'}
                                     </span>
                                 </button>
@@ -941,7 +1186,7 @@ function RoutesPanel(p: RoutesPanelProps) {
                     <KV
                         rows={[
                             ['Loading', name(selected.loadingId)],
-                            ['Unloading', name(selected.unloadingId)],
+                            ['Dumping', name(selected.unloadingId)],
                             [
                                 'Jarak lurus',
                                 siteById.get(selected.loadingId) &&
@@ -1047,7 +1292,7 @@ function RouteFormView({
                 title: editingId ? 'Rute diubah' : 'Rute dibuat',
                 body: editingId
                     ? saved.name
-                    : `${saved.name}. Bagi driver & truk ke rute ini di menu Shift.`,
+                    : `${saved.name}. Bagi operator & unit ke rute ini di menu Shift.`,
             });
             onSaved(saved);
         } catch (err) {
@@ -1074,7 +1319,7 @@ function RouteFormView({
             <Field
                 label={
                     <span className="flex items-center gap-1.5">
-                        <SiteDot type="loading" className="size-4 text-[9px]" /> Titik loading
+                        <SiteDot type="loading" className="size-4 text-[9px]" /> Front loading
                     </span>
                 }
             >
@@ -1086,13 +1331,13 @@ function RouteFormView({
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
                     placeholder="Pilih titik buat loading…"
                     searchPlaceholder="Cari titik…"
-                    aria-label="Titik loading"
+                    aria-label="Front loading"
                 />
             </Field>
             <Field
                 label={
                     <span className="flex items-center gap-1.5">
-                        <SiteDot type="unloading" className="size-4 text-[9px]" /> Titik unloading
+                        <SiteDot type="unloading" className="size-4 text-[9px]" /> Titik dumping
                     </span>
                 }
             >
@@ -1102,9 +1347,9 @@ function RouteFormView({
                     options={unloadings
                         .filter((s) => s.id !== form.loadingId)
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
-                    placeholder="Pilih titik buat unloading…"
+                    placeholder="Pilih titik buat dumping…"
                     searchPlaceholder="Cari titik…"
-                    aria-label="Titik unloading"
+                    aria-label="Titik dumping"
                 />
             </Field>
             {roadInfo}

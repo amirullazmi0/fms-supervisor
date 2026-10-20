@@ -10,7 +10,8 @@ import { useDuty } from '@/lib/duty';
 import type { Duty } from '@/lib/duty';
 import { distanceM } from '@/lib/geo';
 import { drawSites, escHtml, siteCircle, siteIcon } from '@/lib/siteLayer';
-import type { Device, Site, SiteType } from '@/types/fleet';
+import { ZONE_KIND } from '@/lib/labels';
+import type { Device, Site, SiteType, SiteZone } from '@/types/fleet';
 
 export interface Draft {
     name: string;
@@ -36,7 +37,23 @@ interface Props {
     actualPath: [number, number][] | null; // jalan pergi yang biasa dilalui (jejak GPS ritase)
     backPath?: [number, number][] | null; // jalan pulang yang biasa dilalui
     roadBackPath?: [number, number][] | null; // jalur jalan pulang (unloading → loading) dari routing
+    zoneEdit?: { siteId: string; zones: SiteZone[] } | null; // zona antre/spot yang lagi diedit (bisa digeser)
+    onZoneMove?: (i: number, lat: number, lng: number) => void;
     className?: string;
+}
+
+// Zona antre / spot: lingkaran putus-putus, warnanya per jenis.
+function zoneCircle(z: SiteZone, editing: boolean): L.Circle {
+    const k = ZONE_KIND[z.kind];
+    return L.circle([z.lat, z.lng], {
+        radius: z.radius,
+        color: k.color,
+        weight: editing ? 2.5 : 1.5,
+        dashArray: '6 5',
+        fillColor: k.color,
+        fillOpacity: editing ? 0.18 : 0.08,
+        interactive: false,
+    });
 }
 
 const ROUTE_GO = '#16a34a'; // menuju unloading (pergi)
@@ -97,7 +114,7 @@ function truckPopup(d: Device, job: Duty | undefined): string {
     <div class="mp-title">${escHtml(truckLabel(d))}</div>
     <dl>
       <dt>Status</dt><dd>${STATUS_LABEL[st]}${d.last ? ` · ${d.last.speed} km/jam` : ''}</dd>
-      ${job ? `<dt>Supir</dt><dd>${escHtml(job.driverName)} (${escHtml(job.shiftName)})</dd><dt>Rute</dt><dd>${escHtml(job.routeName)}</dd>` : '<dt>Tugas</dt><dd>Nganggur</dd>'}
+      ${job ? `<dt>Operator</dt><dd>${escHtml(job.driverName)} (${escHtml(job.shiftName)})</dd><dt>Rute</dt><dd>${escHtml(job.routeName)}</dd>` : '<dt>Tugas</dt><dd>Nganggur</dd>'}
       <dt>Update</dt><dd>${ago(lastHeard(d))}</dd>
       <dt>Koordinat</dt><dd class="mono">${d.pos!.lat.toFixed(6)}, ${d.pos!.lng.toFixed(6)}</dd>
     </dl>
@@ -121,6 +138,8 @@ export default function SitesMap({
     actualPath,
     backPath,
     roadBackPath,
+    zoneEdit,
+    onZoneMove,
     className = 'h-full w-full',
 }: Props) {
     const el = useRef<HTMLDivElement>(null);
@@ -133,15 +152,17 @@ export default function SitesMap({
     const fitted = useRef(false);
     const popped = useRef<string | null>(null);
     const trucks = useRef(new Map<string, L.Marker>());
+    const zoneLayer = useRef<L.LayerGroup | null>(null);
     const duty = useDuty();
-    const cb = useRef({ onSelect, onPick, canEdit, sites, devices, onPathClick });
-    cb.current = { onSelect, onPick, canEdit, sites, devices, onPathClick };
+    const cb = useRef({ onSelect, onPick, canEdit, sites, devices, onPathClick, onZoneMove });
+    cb.current = { onSelect, onPick, canEdit, sites, devices, onPathClick, onZoneMove };
 
     useEffect(() => {
         const m = L.map(el.current!, { zoomControl: true }).setView([-6.2, 106.83], 12);
         addBasemap(m);
         truckLayer.current = L.layerGroup().addTo(m);
         lineLayer.current = L.layerGroup().addTo(m);
+        zoneLayer.current = L.layerGroup().addTo(m);
         siteLayer.current = L.layerGroup().addTo(m);
         draftLayer.current = L.layerGroup().addTo(m);
         m.on('click', (e: L.LeafletMouseEvent) => {
@@ -268,7 +289,7 @@ export default function SitesMap({
             }).addTo(g);
             L.polyline(back, { color: ROUTE_BACK, weight: 9, opacity: 0.9 })
                 .bindTooltip(
-                    `Menuju loading (pulang) · ${backReal ? 'jalan yang biasa dilalui truk' : 'jalur dari peta jalan'}`,
+                    `Menuju loading (pulang) · ${backReal ? 'jalan yang biasa dilalui unit' : 'jalur dari peta jalan'}`,
                     { sticky: true },
                 )
                 .addTo(g);
@@ -284,7 +305,7 @@ export default function SitesMap({
             ...(goStraight ? { dashArray: '8 8' } : {}),
         })
             .bindTooltip(
-                `Menuju unloading (pergi) · ${goReal ? 'jalan yang biasa dilalui truk' : goStraight ? 'garis lurus (jalur jalan belum ada)' : 'jalur dari peta jalan'}`,
+                `Menuju dumping (pergi) · ${goReal ? 'jalan yang biasa dilalui unit' : goStraight ? 'garis lurus (jalur jalan belum ada)' : 'jalur dari peta jalan'}`,
                 { sticky: true },
             )
             .addTo(g);
@@ -295,9 +316,9 @@ export default function SitesMap({
         ctl.onAdd = () => {
             const el = L.DomUtil.create('div', 'route-legend');
             el.innerHTML = `
-        <div><i style="background:${ROUTE_GO}"></i><b>Menuju unloading</b> (pergi) <small>${escHtml(routeLine.from.name)} → ${escHtml(routeLine.to.name)}</small></div>
+        <div><i style="background:${ROUTE_GO}"></i><b>Menuju dumping</b> (pergi) <small>${escHtml(routeLine.from.name)} → ${escHtml(routeLine.to.name)}</small></div>
         ${back ? `<div><i style="background:${ROUTE_BACK}"></i><b>Menuju loading</b> (pulang) <small>${escHtml(routeLine.to.name)} → ${escHtml(routeLine.from.name)}</small></div>` : ''}
-        <div class="muted">${goReal || backReal ? 'Garis = jalan yang biasa dilalui truk (dari ritase).' : 'Garis = jalur dari peta jalan, belum ada ritase.'} Panah = arah.</div>`;
+        <div class="muted">${goReal || backReal ? 'Garis = jalan yang biasa dilalui unit (dari ritase).' : 'Garis = jalur dari peta jalan, belum ada ritase.'} Panah = arah.</div>`;
             L.DomEvent.disableClickPropagation(el);
             return el;
         };
@@ -346,6 +367,37 @@ export default function SitesMap({
         if (m && !m.getBounds().contains([draft.lat, draft.lng]))
             m.setView([draft.lat, draft.lng], Math.max(m.getZoom(), 17));
     }, [draft]);
+
+    // Zona antre & spot: tersimpan (tipis) untuk semua titik, yang lagi diedit bisa digeser.
+    useEffect(() => {
+        const g = zoneLayer.current;
+        if (!g) return;
+        g.clearLayers();
+        for (const s of sites) {
+            if (s.id === zoneEdit?.siteId) continue;
+            (s.zones ?? []).forEach((z) => zoneCircle(z, false).addTo(g));
+        }
+        zoneEdit?.zones.forEach((z, i) => {
+            zoneCircle(z, true).addTo(g);
+            const k = ZONE_KIND[z.kind];
+            const icon = L.divIcon({
+                className: '',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11],
+                html: `<div style="width:22px;height:22px;border-radius:50%;background:${k.color};border:2px solid #fff;box-shadow:0 1px 4px rgb(0 0 0/.4);color:#fff;font:600 11px/18px sans-serif;text-align:center">${z.kind === 'queue' ? 'A' : 'S'}</div>`,
+            });
+            const mk = L.marker([z.lat, z.lng], { icon, draggable: true, zIndexOffset: 1200 });
+            mk.bindTooltip(`${k.label} · radius ${z.radius} m (geser buat mindahin)`, {
+                direction: 'top',
+                offset: [0, -12],
+            });
+            mk.on('dragend', () => {
+                const ll = mk.getLatLng();
+                cb.current.onZoneMove?.(i, ll.lat, ll.lng);
+            });
+            mk.addTo(g);
+        });
+    }, [sites, zoneEdit]);
 
     // Zoom awal: ke semua titik, kalau belum ada ke posisi truk.
     useEffect(() => {
