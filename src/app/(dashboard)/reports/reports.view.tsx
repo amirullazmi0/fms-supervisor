@@ -56,16 +56,19 @@ const PRESETS: { id: Preset; label: string }[] = [
 ];
 
 const GROUPS: { id: ReportGroup; label: string; col: string }[] = [
-    { id: 'route', label: 'Rute', col: 'Rute' },
-    { id: 'driver', label: 'Driver', col: 'Driver' },
-    { id: 'truck', label: 'Truk', col: 'Truk' },
+    { id: 'route', label: 'Rute', col: 'Rute / fleet' },
+    { id: 'driver', label: 'Operator', col: 'Operator' },
+    { id: 'truck', label: 'Unit', col: 'Unit' },
     { id: 'shift', label: 'Shift', col: 'Shift' },
     { id: 'day', label: 'Hari', col: 'Tanggal' },
+    { id: 'hour', label: 'Jam', col: 'Jam' },
 ];
 
 type SortKey =
     | 'label'
     | 'trips'
+    | 'ton'
+    | 'tonPerHour'
     | 'avgDurationMs'
     | 'backAvgMs'
     | 'cycle'
@@ -156,12 +159,13 @@ export default function ReportsView() {
             t ? (
                 <>
                     <HeaderStat label="Ritase" value={t.done} />
+                    <HeaderStat label="Tonase" value={`${fmtNum(t.ton)} t`} />
                     <HeaderStat
-                        label="Berangkat"
+                        label="Hauling"
                         value={t.done ? fmtDuration(t.avgDurationMs) : '—'}
                     />
                     <HeaderStat
-                        label="Pulang"
+                        label="Return"
                         value={t.backDone ? fmtDuration(t.backAvgMs) : '—'}
                     />
                     {t.fuelUsed != null && t.fuelUnit && (
@@ -285,33 +289,33 @@ export default function ReportsView() {
                         value={filter.driver}
                         onChange={(v) => setFilter({ ...filter, driver: v })}
                         options={[
-                            { value: '', label: 'Semua driver' },
+                            { value: '', label: 'Semua operator' },
                             ...drivers.map((d) => ({
                                 value: d.id,
                                 label: d.name,
                                 hint: d.employeeNo ?? undefined,
                             })),
                         ]}
-                        placeholder="Semua driver"
-                        searchPlaceholder="Cari driver…"
+                        placeholder="Semua operator"
+                        searchPlaceholder="Cari operator…"
                         icon={<UserRound className="size-4 text-muted-foreground" />}
-                        aria-label="Filter driver"
+                        aria-label="Filter operator"
                     />
                     <Combobox
                         value={filter.imei}
                         onChange={(v) => setFilter({ ...filter, imei: v })}
                         options={[
-                            { value: '', label: 'Semua truk' },
+                            { value: '', label: 'Semua unit' },
                             ...trucks.map((d) => ({
                                 value: d.imei,
                                 label: truckLabel(d),
                                 hint: d.vehicle ?? undefined,
                             })),
                         ]}
-                        placeholder="Semua truk"
+                        placeholder="Semua unit"
                         searchPlaceholder="Cari plat…"
                         icon={<Truck className="size-4 text-muted-foreground" />}
-                        aria-label="Filter truk"
+                        aria-label="Filter unit"
                     />
                     {filtered && (
                         <Button
@@ -334,11 +338,21 @@ export default function ReportsView() {
                         <Stat
                             label="Ritase selesai"
                             value={t.done}
-                            sub={`${t.backDone} pulang${t.trips > t.done ? ` · ${t.trips - t.done} belum sampai` : ''}`}
+                            sub={`${t.backDone} return${t.trips > t.done ? ` · ${t.trips - t.done} belum sampai` : ''}`}
                             big
                         />
                         <Stat
-                            label="Berangkat (loading → unloading)"
+                            label="Tonase"
+                            value={`${fmtNum(t.ton)} t`}
+                            sub={
+                                t.tonPerHour
+                                    ? `produktivitas ${fmtNum(t.tonPerHour, 1)} t/jam`
+                                    : 'ritase × truck factor'
+                            }
+                            big
+                        />
+                        <Stat
+                            label="Hauling (front → dumping)"
                             value={t.done ? fmtDuration(t.avgDurationMs) : '—'}
                             sub={
                                 t.done
@@ -348,7 +362,7 @@ export default function ReportsView() {
                             big
                         />
                         <Stat
-                            label="Pulang (unloading → loading)"
+                            label="Return (dumping → front)"
                             value={t.backDone ? fmtDuration(t.backAvgMs) : '—'}
                             sub={
                                 t.backDone
@@ -358,10 +372,9 @@ export default function ReportsView() {
                             big
                         />
                         <Stat
-                            label="1 putaran"
+                            label="Cycle time (1 putaran)"
                             value={cycleOf(t) != null ? fmtDuration(cycleOf(t)!) : '—'}
-                            sub="berangkat + pulang, rata-rata"
-                            big
+                            sub="hauling + return, rata-rata"
                         />
                         <Stat label="Total jarak" value={`${fmtKm(t.distance)} km`} />
                         <Stat
@@ -375,7 +388,7 @@ export default function ReportsView() {
                             sub={t.avgFuel != null ? `${fuel(t.avgFuel)} / ritase` : undefined}
                         />
                         <Stat
-                            label="BBM loading → unloading"
+                            label="BBM loading → dumping"
                             value={
                                 t.avgFuelAtLoading != null
                                     ? `${fmtNum(t.avgFuelAtLoading, 1)} → ${fmtNum(t.avgFuelAtUnloading ?? 0, 1)}`
@@ -404,7 +417,7 @@ export default function ReportsView() {
                 {!loading && rows.length === 0 ? (
                     <Empty className="px-4 pb-4">
                         Belum ada ritase di periode ini. Ritase tercatat dari penugasan shift: tiap
-                        kali truk keluar dari titik loading lalu sampai di titik unloading rutenya.
+                        kali unit keluar dari front loading lalu sampai di titik dumping rutenya.
                     </Empty>
                 ) : (
                     <Table>
@@ -412,16 +425,16 @@ export default function ReportsView() {
                             <TableRow>
                                 {th('label', gcol, false)}
                                 {th('trips', 'Ritase')}
-                                {th('avgDurationMs', 'Berangkat')}
-                                {th('backAvgMs', 'Pulang')}
-                                {th('cycle', '1 putaran')}
+                                {th('ton', 'Tonase')}
+                                {th('tonPerHour', 'Ton / jam')}
+                                {th('avgDurationMs', 'Hauling')}
+                                {th('backAvgMs', 'Return')}
+                                {th('cycle', 'Cycle time')}
                                 {th('distance', 'Jarak')}
                                 {th('stops', 'Berhenti')}
                                 {th('fuelUsed', 'BBM total')}
                                 {th('avgFuel', 'BBM / ritase')}
-                                <TableHead className="text-right">
-                                    BBM loading → unloading
-                                </TableHead>
+                                <TableHead className="text-right">BBM loading → dumping</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -440,7 +453,7 @@ export default function ReportsView() {
                                             <b>{group === 'day' ? fmtDate(r.label) : r.label}</b>
                                             {r.sub && group !== 'day' && (
                                                 <small className="text-xs text-muted-foreground">
-                                                    {r.sub}
+                                                    {group === 'hour' ? fmtDate(r.sub) : r.sub}
                                                 </small>
                                             )}
                                         </button>
@@ -453,6 +466,12 @@ export default function ReportsView() {
                                                 +{r.trips - r.done}
                                             </span>
                                         ) : null}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium tabular-nums">
+                                        {fmtNum(r.ton)} t
+                                    </TableCell>
+                                    <TableCell className="text-right tabular-nums">
+                                        {r.tonPerHour ? fmtNum(r.tonPerHour, 1) : '—'}
                                     </TableCell>
                                     <TableCell className="text-right tabular-nums">
                                         {r.done ? fmtDuration(r.avgDurationMs) : '—'}
@@ -533,6 +552,12 @@ function Detail({
         if (group === 'day') {
             q.set('from', String(new Date(`${row.key}T00:00:00`).getTime()));
             q.set('to', String(new Date(`${row.key}T23:59:59.999`).getTime()));
+        }
+        if (group === 'hour') {
+            // key = "YYYY-MM-DD HH" (zona waktu laporan)
+            const [d, h] = row.key.split(' ');
+            q.set('from', String(new Date(`${d}T${h}:00:00`).getTime()));
+            q.set('to', String(new Date(`${d}T${h}:59:59.999`).getTime()));
         }
         setTrips(null);
         q.set('limit', '500');

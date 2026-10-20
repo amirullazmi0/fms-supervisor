@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Radio } from 'lucide-react';
 import LineChart from '@/components/fleet/LineChart';
+import UnitStatusTimeline from '@/components/fleet/UnitStatusTimeline';
 import EventList from '@/components/fleet/EventList';
 import { CommandBox, Terminal } from '@/components/fleet/Terminal';
 import type { TermLine } from '@/components/fleet/Terminal';
@@ -147,7 +148,7 @@ export default function DeviceDetail({
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <Input
                         className="h-auto border-transparent bg-transparent px-0 text-2xl font-bold tracking-tight shadow-none hover:border-input focus-visible:px-2"
-                        aria-label="Nama kendaraan"
+                        aria-label="Nama unit"
                         placeholder={displayName(d)}
                         defaultValue={d.name ?? ''}
                         readOnly={!can(P.deviceUpdate)}
@@ -258,7 +259,7 @@ export default function DeviceDetail({
 
             <Card className="gap-3">
                 <CardHeader>
-                    <CardTitle>CAN kendaraan</CardTitle>
+                    <CardTitle>CAN unit</CardTitle>
                     <CardDescription>tergantung mobil &amp; Program Number</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -305,7 +306,7 @@ export default function DeviceDetail({
                     ) : (
                         <Empty>
                             Belum ada data CAN. Data ini baru muncul kalau FMC150 udah dipasang ke
-                            CAN mobil dan Program Number-nya di-set.
+                            CAN unit dan Program Number-nya di-set.
                         </Empty>
                     )}
                 </CardContent>
@@ -346,16 +347,18 @@ export default function DeviceDetail({
                 </CardContent>
             </Card>
 
+            <UnitStatusTimeline imei={d.imei} />
+
             <div className="grid gap-4 xl:grid-cols-2">
                 <Card className="gap-3">
                     <CardHeader>
-                        <CardTitle>Event kendaraan ini</CardTitle>
+                        <CardTitle>Event unit ini</CardTitle>
                     </CardHeader>
                     <CardContent className="max-h-80 overflow-y-auto">
                         <EventList
                             events={events}
                             devices={devices}
-                            empty="Belum ada event buat kendaraan ini."
+                            empty="Belum ada event buat unit ini."
                         />
                     </CardContent>
                 </Card>
