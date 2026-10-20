@@ -340,6 +340,13 @@ export interface Driver {
     updatedAt: number;
 }
 
+// Istirahat terjadwal (P2-3): HH:MM, selesai < mulai = lewat tengah malam; code = delay code standby terencana.
+export interface ShiftBreak {
+    start: string;
+    end: string;
+    code: string;
+}
+
 export interface ShiftTemplate {
     id: string;
     name: string;
@@ -347,6 +354,7 @@ export interface ShiftTemplate {
     endTime: string; // HH:MM (lebih kecil dari startTime = lewat tengah malam)
     autoClose: boolean;
     sort: number;
+    breaks: ShiftBreak[];
 }
 
 export type ShiftStatus = 'planned' | 'active' | 'closed';
@@ -378,6 +386,7 @@ export interface Shift {
     note: string | null;
     overdue: boolean; // aktif tetapi sudah melewati jam selesai
     assignments: Assignment[];
+    breaks: ShiftBreak[];
     createdAt: number;
     updatedAt: number;
 }

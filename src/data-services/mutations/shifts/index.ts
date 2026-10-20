@@ -14,12 +14,30 @@ export type ShiftsMutationKeys =
     | 'shifts-assign'
     | 'shifts-copy-previous'
     | 'assignments-update'
-    | 'assignments-delete';
+    | 'assignments-delete'
+    | 'shift-templates-create'
+    | 'shift-templates-update'
+    | 'shift-templates-delete';
 
 // Anything touching a shift can change who is on duty (routes/sites carry onDuty).
 const SHIFT_VIEWS: AllQueryKeys[] = ['shifts', 'shifts-by-id', 'routes', 'sites', 'drivers-last'];
 
 export const shiftsMutations: MutationDataService<ShiftsMutationKeys> = {
+    'shift-templates-create': {
+        url: '/shift-templates',
+        method: 'POST',
+        refetchQueries: ['shift-templates'],
+    },
+    'shift-templates-update': {
+        url: '/shift-templates/:id',
+        method: 'PUT',
+        refetchQueries: ['shift-templates'],
+    },
+    'shift-templates-delete': {
+        url: '/shift-templates/:id',
+        method: 'DELETE',
+        refetchQueries: ['shift-templates'],
+    },
     'drivers-create': { url: '/drivers', method: 'POST', refetchQueries: ['drivers'] },
     'drivers-update': { url: '/drivers/:id', method: 'PUT', refetchQueries: ['drivers', 'routes'] },
     'drivers-delete': { url: '/drivers/:id', method: 'DELETE', refetchQueries: ['drivers'] },

@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { EmptyState } from '@/components/fleet/Page';
 import ShiftCrew from '@/components/fleet/ShiftCrew';
+import BreaksEditor from '@/components/fleet/BreaksEditor';
+import TemplateManager from '@/components/fleet/TemplateManager';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { useToast } from '@/components/fleet/Toasts';
 import { useData, useTick } from '@/provider/StreamProvider';
@@ -46,7 +48,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Empty, Note, RoutePair, Stat } from '@/components/ui/misc';
-import type { Route, Shift, TripRecord } from '@/types/fleet';
+import type { Route, Shift, ShiftBreak, TripRecord } from '@/types/fleet';
 
 const STATUS: Record<Shift['status'] | 'overdue', { label: string; variant: BadgeVariant }> = {
     planned: { label: 'Rencana', variant: 'outline' },
@@ -85,6 +87,7 @@ export default function ShiftsView() {
     const [selected, setSelected] = useQueryState('shift'); // ?shift=<id>
     const [creatingQ, setCreatingQ] = useQueryState('baru'); // ?baru=1: langsung buka form shift baru (dari Beranda)
     const creating = creatingQ === '1';
+    const [templatesOpen, setTemplatesOpen] = useState(false);
     const [mobileDetail, setMobileDetail] = useState(() => selected != null); // dibuka dari link ?shift= = langsung detail
     const setCreating = (v: boolean) => void setCreatingQ(v ? '1' : null);
 
@@ -183,6 +186,15 @@ export default function ShiftsView() {
                                 </button>
                             )}
                         </span>
+                        {can(P.shiftTemplateRead) && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setTemplatesOpen(true)}
+                            >
+                                Template
+                            </Button>
+                        )}
                         {canCreate && (
                             <Button size="sm" onClick={() => setCreating(true)}>
                                 <Plus /> Shift
@@ -255,6 +267,7 @@ export default function ShiftsView() {
                 )}
             </section>
 
+            <TemplateManager open={templatesOpen} onOpenChange={setTemplatesOpen} />
             <ShiftForm
                 open={creating}
                 date={date}
@@ -353,6 +366,7 @@ function ShiftForm({
         end: shift ? hmOf(shift.plannedEnd) : '14:00',
         autoClose: shift?.autoClose ?? true,
         note: shift?.note ?? '',
+        breaks: (shift?.breaks ?? []) as ShiftBreak[],
     });
     const [form, setForm] = useState(init);
     const [saving, setSaving] = useState(false);
@@ -363,6 +377,7 @@ function ShiftForm({
         plannedEnd: number;
         autoClose: boolean;
         note: string;
+        breaks: ShiftBreak[];
         date?: string;
     };
     const create = useMutationApiRequest<GlobalApiResponse<Shift>, Body>({
@@ -402,6 +417,7 @@ function ShiftForm({
                 plannedEnd,
                 autoClose: form.autoClose,
                 note: form.note,
+                breaks: form.breaks,
             };
             if (shift) {
                 const s = (await update.mutateAsync({ ...base, routeId: form.routeId })).data!;
@@ -479,6 +495,7 @@ function ShiftForm({
                                                 start: t.startTime,
                                                 end: t.endTime,
                                                 autoClose: t.autoClose,
+                                                breaks: t.breaks ?? [],
                                             })
                                         }
                                     >
@@ -648,6 +665,7 @@ function ShiftForm({
                             onCheckedChange={(v) => set('autoClose', v)}
                         />
                     </Label>
+                    <BreaksEditor value={form.breaks} onChange={(v) => set('breaks', v)} />
                     <Field label="Catatan">
                         <Input
                             value={form.note}
