@@ -1,11 +1,13 @@
 'use client';
-// Kru satu shift: driver + truk yang jalan di rute shift ini.
-//   - "Tugaskan driver": pilih driver (bisa dicari), truk keisi otomatis (truk terakhir driver itu).
-//   - Driver/truk yang lagi ada di shift lain yang jamnya bentrok nggak bisa dipilih.
-//   - Penugasan yang udah selesai (ganti truk / selesai tugas) tetap tampil pudar sebagai riwayat.
+// Kru satu shift: operator + unit yang jalan di rute shift ini.
+//   - "Tugaskan operator": pilih operator (bisa dicari), unit keisi otomatis (unit terakhir operator itu).
+//   - "Tugaskan massal": semua operator yang belum dapat tugas sekaligus, unit disarankan, simpan sekali.
+//   - Operator/unit yang lagi ada di shift lain yang jamnya bentrok nggak bisa dipilih.
+//   - Penugasan yang udah selesai (ganti unit / selesai tugas) tetap tampil pudar sebagai riwayat.
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ChevronDown, Copy, Plus, Truck, UserPlus, X } from 'lucide-react';
+import { ChevronDown, Copy, ListChecks, Plus, Truck, UserPlus, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import TripTable from '@/components/fleet/TripTable';
 import { useToast } from '@/components/fleet/Toasts';
 import { useData } from '@/provider/StreamProvider';
@@ -87,6 +89,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
     });
     const [adding, setAdding] = useState<string | null>(null); // null = form tertutup, '' = kosong, id = driver dari daftar "belum dapat tugas"
     const [expanded, setExpanded] = useState<string | null>(null);
+    const [bulk, setBulk] = useState(false);
 
     const trucks = useMemo(
         () => Object.values(devices).sort((a, b) => truckLabel(a).localeCompare(truckLabel(b))),
@@ -109,7 +112,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
         try {
             const r = (await copy.mutateAsync()).data!;
             toast({
-                title: `${r.added} driver disalin dari ${r.from}`,
+                title: `${r.added} operator disalin dari ${r.from}`,
                 body: r.skipped.length
                     ? `${r.skipped.length} dilewati: ${r.skipped[0]}`
                     : undefined,
@@ -122,10 +125,10 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
     };
 
     return (
-        <section className="flex flex-col gap-3" aria-label="Driver di shift ini">
+        <section className="flex flex-col gap-3" aria-label="Operator di shift ini">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="m-0 text-[15px] font-semibold">
-                    Driver &amp; truk{' '}
+                    Operator &amp; unit{' '}
                     <span className="font-normal text-muted-foreground">
                         · {open.length} bertugas
                     </span>
@@ -158,7 +161,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                     ))}
                     {list.length === 0 && (
                         <li className="px-4 py-5">
-                            <Empty>Belum ada driver di shift ini.</Empty>
+                            <Empty>Belum ada operator di shift ini.</Empty>
                         </li>
                     )}
                 </ul>
@@ -178,21 +181,40 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                             onDone={onChanged}
                             onClose={() => setAdding(null)}
                         />
+                    ) : bulk ? (
+                        <BulkAssign
+                            shift={shift}
+                            freeDrivers={freeDrivers}
+                            freeTrucks={freeTrucks}
+                            last={last}
+                            onDone={onChanged}
+                            onClose={() => setBulk(false)}
+                        />
                     ) : (
-                        <div className="border-t p-3">
+                        <div className="flex flex-col gap-2 border-t p-3 sm:flex-row">
                             <Button
                                 variant="outline"
-                                className="w-full border-dashed"
+                                className="min-h-11 flex-1 border-dashed"
                                 onClick={() => setAdding('')}
                                 disabled={!freeDrivers.length}
                             >
                                 <UserPlus />{' '}
                                 {freeDrivers.length
-                                    ? 'Tugaskan driver'
+                                    ? 'Tugaskan operator'
                                     : drivers.length
-                                      ? 'Semua driver aktif udah dapat tugas'
-                                      : 'Belum ada driver. Tambah di tab Driver.'}
+                                      ? 'Semua operator aktif udah dapat tugas'
+                                      : 'Belum ada operator. Tambah di menu Operator.'}
                             </Button>
+                            {freeDrivers.length > 1 && freeTrucks.length > 0 && (
+                                <Button
+                                    variant="secondary"
+                                    className="min-h-11"
+                                    onClick={() => setBulk(true)}
+                                >
+                                    <ListChecks /> Tugaskan massal (
+                                    {Math.min(freeDrivers.length, freeTrucks.length)})
+                                </Button>
+                            )}
                         </div>
                     ))}
             </Card>
@@ -205,7 +227,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                     {freeDrivers.length > 0 && (
                         <div className="flex flex-col gap-2">
                             <span className="text-xs font-semibold text-muted-foreground">
-                                Driver belum dapat tugas
+                                Operator belum dapat tugas
                             </span>
                             <div className="flex flex-wrap gap-1.5">
                                 {freeDrivers.map((d) => (
@@ -225,7 +247,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                     {freeTrucks.length > 0 && (
                         <div className="flex flex-col gap-2">
                             <span className="text-xs font-semibold text-muted-foreground">
-                                Truk nganggur
+                                Unit nganggur
                             </span>
                             <div className="flex flex-wrap gap-1.5">
                                 {freeTrucks.map((t) => (
@@ -243,6 +265,162 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                 </div>
             )}
         </section>
+    );
+}
+
+// ---------- Tugaskan massal ----------
+// Semua operator yang belum dapat tugas sekaligus: unit disarankan dari unit terakhir operator itu
+// (kalau masih nganggur), sisanya dibagi dari unit nganggur. Unit nggak boleh dobel.
+function BulkAssign({
+    shift,
+    freeDrivers,
+    freeTrucks,
+    last,
+    onDone,
+    onClose,
+}: {
+    shift: Shift;
+    freeDrivers: Driver[];
+    freeTrucks: Device[];
+    last: Last;
+    onDone: () => void;
+    onClose: () => void;
+}) {
+    const toast = useToast();
+    const assign = useMutationApiRequest<
+        GlobalApiResponse<Assignment>,
+        { driverId: string; imei: string }
+    >({ key: 'shifts-assign', params: { id: shift.id }, config: SILENT });
+    const [rows, setRows] = useState(() => {
+        const taken = new Set<string>();
+        const pick = (driverId: string) => {
+            const prev = last[driverId]?.imei;
+            if (prev && !taken.has(prev) && freeTrucks.some((t) => t.imei === prev)) return prev;
+            return '';
+        };
+        // Dua putaran: yang punya unit terakhir dulu, lalu sisanya dapat unit nganggur berikutnya.
+        const first = freeDrivers.map((d) => {
+            const imei = pick(d.id);
+            if (imei) taken.add(imei);
+            return { driverId: d.id, imei, on: true };
+        });
+        return first.map((r) => {
+            if (r.imei) return r;
+            const t = freeTrucks.find((x) => !taken.has(x.imei));
+            if (!t) return { ...r, on: false };
+            taken.add(t.imei);
+            return { ...r, imei: t.imei };
+        });
+    });
+    const [saving, setSaving] = useState(false);
+    const dupes = new Set(
+        rows
+            .filter((r) => r.on && r.imei)
+            .map((r) => r.imei)
+            .filter((x, i, a) => a.indexOf(x) !== i),
+    );
+    const chosen = rows.filter((r) => r.on && r.imei);
+    const set = (i: number, patch: Partial<(typeof rows)[number]>) =>
+        setRows(rows.map((r, k) => (k === i ? { ...r, ...patch } : r)));
+
+    const save = async () => {
+        setSaving(true);
+        let ok = 0;
+        const failed: string[] = [];
+        for (const r of chosen) {
+            try {
+                await assign.mutateAsync({ driverId: r.driverId, imei: r.imei });
+                ok++;
+            } catch (err) {
+                failed.push(
+                    `${freeDrivers.find((d) => d.id === r.driverId)?.name ?? 'Operator'}: ${errText(err)}`,
+                );
+            }
+        }
+        setSaving(false);
+        toast({
+            title: `${ok} operator ditugaskan`,
+            body: failed.length ? `${failed.length} gagal: ${failed[0]}` : undefined,
+            level: failed.length ? 'warn' : 'info',
+        });
+        onDone();
+        if (!failed.length) onClose();
+    };
+
+    return (
+        <div className="flex flex-col gap-3 border-t bg-brand-soft/40 p-3">
+            <div className="flex items-center justify-between gap-2">
+                <b className="text-sm">Tugaskan massal</b>
+                <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Tutup">
+                    <X />
+                </Button>
+            </div>
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {rows.map((r, i) => {
+                    const d = freeDrivers.find((x) => x.id === r.driverId)!;
+                    const dup = r.on && dupes.has(r.imei);
+                    return (
+                        <li
+                            key={r.driverId}
+                            className={cn(
+                                'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-lg bg-card p-2 sm:grid-cols-[auto_minmax(0,1fr)_14rem]',
+                                !r.on && 'opacity-60',
+                            )}
+                        >
+                            <Checkbox
+                                checked={r.on}
+                                onCheckedChange={(v) => set(i, { on: Boolean(v) })}
+                                aria-label={`Tugaskan ${d.name}`}
+                            />
+                            <span className="min-w-0">
+                                <b className="block truncate text-sm">{d.name}</b>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                    {d.employeeNo ? `NIK ${d.employeeNo}` : ''}
+                                    {last[d.id]?.imei === r.imei && r.imei
+                                        ? ' · unit terakhir'
+                                        : ''}
+                                </span>
+                            </span>
+                            <div className="col-span-2 sm:col-span-1">
+                                <Combobox
+                                    value={r.imei}
+                                    onChange={(v) => set(i, { imei: v, on: true })}
+                                    options={freeTrucks.map((t) => ({
+                                        value: t.imei,
+                                        label: truckLabel(t),
+                                        hint: rows.some(
+                                            (x, k) => k !== i && x.on && x.imei === t.imei,
+                                        )
+                                            ? 'dipakai di baris lain'
+                                            : (t.vehicle ?? undefined),
+                                    }))}
+                                    placeholder="Pilih unit…"
+                                    aria-label={`Unit ${d.name}`}
+                                    icon={<Truck className="size-4 text-muted-foreground" />}
+                                />
+                                {dup && (
+                                    <p className="m-0 mt-1 text-xs text-destructive">
+                                        Unit ini dipilih lebih dari sekali.
+                                    </p>
+                                )}
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">
+                    {chosen.length} operator · unit nganggur {freeTrucks.length}
+                </span>
+                <Button
+                    className="min-h-11"
+                    onClick={() => void save()}
+                    disabled={saving || chosen.length === 0 || dupes.size > 0}
+                >
+                    {saving ? 'Menyimpan…' : `Tugaskan ${chosen.length} operator`}
+                </Button>
+            </div>
+        </div>
     );
 }
 
@@ -301,7 +479,7 @@ function AddForm({
         try {
             await assign.mutateAsync({ driverId, imei });
             const d = freeDrivers.find((x) => x.id === driverId);
-            toast({ title: `${d?.name ?? 'Driver'} ditugaskan` });
+            toast({ title: `${d?.name ?? 'Operator'} ditugaskan` });
             setDriverId('');
             setImei('');
             onDone();
@@ -342,18 +520,18 @@ function AddForm({
                 value={driverId}
                 onChange={pickDriver}
                 options={driverOptions}
-                placeholder="Pilih driver…"
+                placeholder="Pilih operator…"
                 searchPlaceholder="Cari nama / no. karyawan…"
-                aria-label="Driver"
+                aria-label="Operator"
             />
             <Combobox
                 className="sm:flex-1"
                 value={imei}
                 onChange={setImei}
                 options={truckOptions}
-                placeholder="Pilih truk…"
+                placeholder="Pilih unit…"
                 searchPlaceholder="Cari plat / jenis…"
-                aria-label="Truk"
+                aria-label="Unit"
                 icon={<Truck className="size-4 text-muted-foreground" />}
             />
             <div className="flex gap-2">
@@ -375,7 +553,7 @@ function AddForm({
                 </Button>
             </div>
             {freeTrucks.length === 0 && (
-                <Empty className="text-xs sm:basis-full">Semua truk lagi dipakai.</Empty>
+                <Empty className="text-xs sm:basis-full">Semua unit lagi dipakai.</Empty>
             )}
         </form>
     );
@@ -445,10 +623,10 @@ function AssignmentItem({
         try {
             await update.mutateAsync({ driverId: a.driverId, imei, note: a.note });
             toast({
-                title: 'Truk diganti',
+                title: 'Unit diganti',
                 body:
                     status === 'active'
-                        ? 'Ritase sebelumnya tetap kecatat di truk lama.'
+                        ? 'Ritase sebelumnya tetap kecatat di unit lama.'
                         : undefined,
             });
             onChanged();
@@ -462,8 +640,8 @@ function AssignmentItem({
             toast({
                 title:
                     r.result === 'ended'
-                        ? `${driver?.name ?? 'Driver'} selesai tugas`
-                        : `${driver?.name ?? 'Driver'} dilepas dari shift`,
+                        ? `${driver?.name ?? 'Operator'} selesai tugas`
+                        : `${driver?.name ?? 'Operator'} dilepas dari shift`,
                 body:
                     r.result === 'ended' ? 'Ritase yang udah dijalanin tetap kecatat.' : undefined,
                 level: 'warn',
@@ -491,7 +669,7 @@ function AssignmentItem({
                         className={cn(ended && 'bg-muted text-muted-foreground')}
                     />
                     <span className="flex min-w-0 flex-1 flex-col">
-                        <b className="truncate text-sm">{driver?.name ?? 'Driver dihapus'}</b>
+                        <b className="truncate text-sm">{driver?.name ?? 'Operator dihapus'}</b>
                         <span className="truncate font-mono text-xs text-muted-foreground">
                             {truck ? truckLabel(truck) : a.imei}
                             {when && <span className="font-sans"> · {when}</span>}
@@ -530,17 +708,17 @@ function AssignmentItem({
                                 label: truckLabel(t),
                                 hint: t.vehicle ?? undefined,
                             }))}
-                            placeholder="Ganti truk…"
+                            placeholder="Ganti unit…"
                             searchPlaceholder="Cari plat…"
-                            empty="Nggak ada truk yang nganggur."
-                            aria-label="Ganti truk"
+                            empty="Nggak ada unit yang nganggur."
+                            aria-label="Ganti unit"
                         />
                         <Button
                             variant="ghost"
                             size="icon-sm"
                             className="text-muted-foreground hover:text-destructive"
                             onClick={() => setConfirm(true)}
-                            aria-label={`Lepas ${driver?.name ?? 'driver'} dari shift`}
+                            aria-label={`Lepas ${driver?.name ?? 'operator'} dari shift`}
                         >
                             <X />
                         </Button>
@@ -560,7 +738,7 @@ function AssignmentItem({
                             empty={
                                 status === 'planned'
                                     ? 'Shift belum mulai.'
-                                    : 'Belum ada ritase. Kehitung setelah truk keluar dari titik loading lalu sampai di unloading.'
+                                    : 'Belum ada ritase. Kehitung setelah unit keluar dari front loading lalu sampai di dumping.'
                             }
                         />
                     </div>
@@ -571,12 +749,12 @@ function AssignmentItem({
                 onOpenChange={setConfirm}
                 title={
                     ending
-                        ? `Selesaikan tugas ${driver?.name ?? 'driver'}?`
-                        : `Lepas ${driver?.name ?? 'driver'} dari shift?`
+                        ? `Selesaikan tugas ${driver?.name ?? 'operator'}?`
+                        : `Lepas ${driver?.name ?? 'operator'} dari shift?`
                 }
                 description={
                     ending
-                        ? 'Ritase yang udah dijalanin tetap kecatat. Driver & truknya bisa ditugaskan lagi.'
+                        ? 'Ritase yang udah dijalanin tetap kecatat. Operator & truknya bisa ditugaskan lagi.'
                         : 'Penugasan ini dihapus dari shift.'
                 }
                 confirmLabel={ending ? 'Selesai tugas' : 'Lepas'}

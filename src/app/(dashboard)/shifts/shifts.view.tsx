@@ -1,10 +1,11 @@
 'use client';
 // Shift kerja: supervisor bikin shift (pagi/sore/…) untuk satu rute, bagi driver + truk, lalu nutup shift.
 // Ritase tiap driver dihitung otomatis dari GPS selama shift jalan.
+import { useQueryState } from 'nuqs';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
-    CalendarClock,
+    CalendarPlus,
     ChevronLeft,
     ChevronRight,
     Clock,
@@ -15,7 +16,7 @@ import {
     Square,
     Trash2,
 } from 'lucide-react';
-import DriverManager from '@/components/fleet/DriverManager';
+import { EmptyState } from '@/components/fleet/Page';
 import ShiftCrew from '@/components/fleet/ShiftCrew';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { useToast } from '@/components/fleet/Toasts';
@@ -33,9 +34,8 @@ import type { BadgeVariant } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Field, Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/checkbox';
+import { Checkbox, Switch } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     ConfirmDialog,
     Dialog,
@@ -82,8 +82,11 @@ export default function ShiftsView() {
     const canCreate = can(P.shiftCreate);
 
     const [date, setDate] = useState(() => dateKey());
-    const [selected, setSelected] = useState<string | null>(null);
-    const [creating, setCreating] = useState(false);
+    const [selected, setSelected] = useQueryState('shift'); // ?shift=<id>
+    const [creatingQ, setCreatingQ] = useQueryState('baru'); // ?baru=1: langsung buka form shift baru (dari Beranda)
+    const creating = creatingQ === '1';
+    const [mobileDetail, setMobileDetail] = useState(() => selected != null); // dibuka dari link ?shift= = langsung detail
+    const setCreating = (v: boolean) => void setCreatingQ(v ? '1' : null);
 
     // Shift tanggal yang dipilih (+ yang masih aktif dari tanggal lain). Stream 'shifts' bikin refetch.
     const listQuery = useQueryApiRequest<GlobalApiResponse<Shift[]>>({
@@ -94,9 +97,15 @@ export default function ShiftsView() {
 
     // Pilih otomatis: shift aktif, kalau nggak ada yang pertama.
     useEffect(() => {
-        if (selected && list.some((s) => s.id === selected)) return;
-        setSelected((list.find((s) => s.status === 'active') ?? list[0])?.id ?? null);
-    }, [list, selected]);
+        // Tunggu data dulu, biar ?shift= dari link nggak kehapus waktu daftar masih kosong.
+        if (!listQuery.isSuccess) return;
+        if (
+            selected &&
+            (list.some((s) => s.id === selected) || todayShifts.some((s) => s.id === selected))
+        )
+            return;
+        void setSelected((list.find((s) => s.status === 'active') ?? list[0])?.id ?? null);
+    }, [list, selected, listQuery.isSuccess, todayShifts, setSelected]);
 
     useEffect(() => {
         const active = todayShifts.filter((s) => s.status === 'active');
@@ -109,7 +118,7 @@ export default function ShiftsView() {
         setStats(
             <>
                 <HeaderStat label="Shift aktif" value={active.length} />
-                <HeaderStat label="Driver bertugas" value={asg} />
+                <HeaderStat label="Operator bertugas" value={asg} />
                 {overdue > 0 && <HeaderStat label="Lewat jam" value={overdue} tone="danger" />}
             </>,
         );
@@ -120,107 +129,129 @@ export default function ShiftsView() {
     const shown = list.filter((s) => s.date === date);
     const otherActive = list.filter((s) => s.date !== date && s.status === 'active');
 
+    // HP / tablet: daftar dan detail gantian (bukan ditumpuk). Detail tampil setelah shift dipilih.
+    const pick = (id: string) => {
+        void setSelected(id);
+        setMobileDetail(true);
+    };
+
     return (
         <div className="flex min-h-full flex-col lg:h-full lg:flex-row">
             <aside
-                className="flex shrink-0 flex-col gap-4 border-b bg-card p-4 lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                className={cn(
+                    'flex shrink-0 flex-col gap-4 border-b bg-card p-4 lg:flex lg:w-[360px] lg:overflow-y-auto lg:border-b-0 lg:border-r',
+                    mobileDetail && 'max-lg:hidden',
+                )}
                 aria-label="Daftar shift"
             >
-                <Tabs defaultValue="shifts">
-                    <TabsList className="w-full">
-                        <TabsTrigger value="shifts">
-                            <CalendarClock /> Shift
-                        </TabsTrigger>
-                        <TabsTrigger value="drivers">Driver</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="drivers" className="pt-1">
-                        <DriverManager canEdit={can(P.driverCreate) || can(P.driverUpdate)} />
-                    </TabsContent>
-
-                    <TabsContent value="shifts" className="flex flex-col gap-3 pt-1">
-                        <div className="flex items-center gap-1.5">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setDate(addDays(date, -1))}
-                                aria-label="Hari sebelumnya"
-                            >
-                                <ChevronLeft />
-                            </Button>
-                            <Input
-                                type="date"
-                                className="flex-1"
-                                value={date}
-                                onChange={(e) => e.target.value && setDate(e.target.value)}
-                                aria-label="Tanggal"
-                            />
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setDate(addDays(date, 1))}
-                                aria-label="Hari berikutnya"
-                            >
-                                <ChevronRight />
-                            </Button>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold">
-                                {fmtDate(date)}
-                                {!isToday && (
-                                    <button
-                                        type="button"
-                                        className="ml-2 text-xs font-medium text-info hover:underline"
-                                        onClick={() => setDate(dateKey())}
-                                    >
-                                        Hari ini
-                                    </button>
-                                )}
-                            </span>
-                            {canCreate && (
-                                <Button size="sm" onClick={() => setCreating(true)}>
-                                    <Plus /> Shift
-                                </Button>
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-1.5">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setDate(addDays(date, -1))}
+                            aria-label="Hari sebelumnya"
+                        >
+                            <ChevronLeft />
+                        </Button>
+                        <Input
+                            type="date"
+                            className="flex-1"
+                            value={date}
+                            onChange={(e) => e.target.value && setDate(e.target.value)}
+                            aria-label="Tanggal"
+                        />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setDate(addDays(date, 1))}
+                            aria-label="Hari berikutnya"
+                        >
+                            <ChevronRight />
+                        </Button>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold">
+                            {fmtDate(date)}
+                            {!isToday && (
+                                <button
+                                    type="button"
+                                    className="ml-2 text-xs font-medium text-info hover:underline"
+                                    onClick={() => setDate(dateKey())}
+                                >
+                                    Hari ini
+                                </button>
                             )}
-                        </div>
+                        </span>
+                        {canCreate && (
+                            <Button size="sm" onClick={() => setCreating(true)}>
+                                <Plus /> Shift
+                            </Button>
+                        )}
+                    </div>
 
-                        {otherActive.length > 0 && (
-                            <>
-                                <span className="text-xs text-muted-foreground">
-                                    Masih aktif dari tanggal lain
-                                </span>
-                                <ShiftList
-                                    shifts={otherActive}
-                                    selected={selected}
-                                    onSelect={setSelected}
-                                    showDate
-                                />
-                            </>
-                        )}
-                        {shown.length === 0 ? (
-                            <Empty>
-                                Belum ada shift di tanggal ini.
-                                {canCreate
-                                    ? ' Tekan "+ Shift" buat bikin, mis. Pagi atau Sore.'
-                                    : ''}
-                            </Empty>
-                        ) : (
-                            <ShiftList shifts={shown} selected={selected} onSelect={setSelected} />
-                        )}
-                    </TabsContent>
-                </Tabs>
+                    {otherActive.length > 0 && (
+                        <>
+                            <span className="text-xs text-muted-foreground">
+                                Masih aktif dari tanggal lain
+                            </span>
+                            <ShiftList
+                                shifts={otherActive}
+                                selected={selected}
+                                onSelect={pick}
+                                showDate
+                            />
+                        </>
+                    )}
+                    {shown.length === 0 ? (
+                        <EmptyState
+                            icon={CalendarPlus}
+                            title="Belum ada shift di tanggal ini"
+                            action={
+                                canCreate ? (
+                                    <Button size="sm" onClick={() => setCreating(true)}>
+                                        <Plus /> Buat shift
+                                    </Button>
+                                ) : undefined
+                            }
+                        >
+                            Shift dibuat per rute / fleet, mis. Pagi atau Malam. Bisa beberapa rute
+                            sekaligus.
+                        </EmptyState>
+                    ) : (
+                        <ShiftList shifts={shown} selected={selected} onSelect={pick} />
+                    )}
+                </div>
             </aside>
 
-            <section className="min-w-0 flex-1 p-4 md:p-6 lg:overflow-y-auto">
+            <section
+                className={cn(
+                    'min-w-0 flex-1 p-4 md:p-6 lg:block lg:overflow-y-auto',
+                    !mobileDetail && 'max-lg:hidden',
+                )}
+            >
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mb-3 -ml-2 lg:hidden"
+                    onClick={() => setMobileDetail(false)}
+                >
+                    <ChevronLeft /> Daftar shift
+                </Button>
                 {selected ? (
                     <ShiftDetail
                         key={selected}
                         id={selected}
                         others={[...list, ...todayShifts]}
-                        onGone={() => setSelected(null)}
+                        onGone={() => {
+                            void setSelected(null);
+                            setMobileDetail(false);
+                        }}
                     />
                 ) : (
-                    <Empty>Pilih shift di kiri, atau bikin shift baru.</Empty>
+                    <EmptyState icon={CalendarPlus} title="Pilih shift" className="mt-6">
+                        Pilih shift di daftar, atau buat shift baru.
+                    </EmptyState>
                 )}
             </section>
 
@@ -230,7 +261,7 @@ export default function ShiftsView() {
                 onOpenChange={setCreating}
                 onSaved={(s) => {
                     setCreating(false);
-                    setSelected(s.id);
+                    pick(s.id);
                 }}
             />
         </div>
@@ -284,7 +315,7 @@ function ShiftList({
                                 <span className="inline-flex items-center gap-1 font-mono">
                                     <Clock className="size-3.5" /> {span(s)}
                                 </span>
-                                <span>{onDuty(s)} driver</span>
+                                <span>{onDuty(s)} operator</span>
                             </span>
                         </button>
                     </li>
@@ -314,6 +345,9 @@ function ShiftForm({
     const init = () => ({
         name: shift?.name ?? '',
         routeId: shift?.routeId ?? (routes.length === 1 ? routes[0].id : ''),
+        // Shift baru: bisa langsung beberapa rute sekaligus (1 shift per rute), crew disalin dari shift sebelumnya.
+        routeIds: shift ? [] : routes.length === 1 ? [routes[0].id] : [],
+        copyCrew: true,
         date: shift?.date ?? date,
         start: shift ? hmOf(shift.plannedStart) : '06:00',
         end: shift ? hmOf(shift.plannedEnd) : '14:00',
@@ -340,6 +374,10 @@ function ShiftForm({
         params: () => ({ id: shift?.id ?? '' }),
         config: SILENT,
     });
+    const copy = useMutationApiRequest<
+        GlobalApiResponse<{ from: string; added: number; skipped: string[] }>,
+        { __params: { id: string } }
+    >({ key: 'shifts-copy-previous', config: SILENT });
     // Form diisi ulang tiap dialog dibuka.
     useEffect(() => {
         if (open) setForm(init());
@@ -358,24 +396,38 @@ function ShiftForm({
         try {
             const plannedStart = atTime(form.date, form.start);
             const plannedEnd = atTime(overnight ? addDays(form.date, 1) : form.date, form.end);
-            const body = {
+            const base = {
                 name: form.name.trim(),
-                routeId: form.routeId,
                 plannedStart,
                 plannedEnd,
                 autoClose: form.autoClose,
                 note: form.note,
             };
-            const s = (
-                shift
-                    ? await update.mutateAsync(body)
-                    : await create.mutateAsync({ ...body, date: form.date })
-            ).data!;
+            if (shift) {
+                const s = (await update.mutateAsync({ ...base, routeId: form.routeId })).data!;
+                toast({ title: 'Shift diubah', body: `${r?.route.name ?? ''} · ${span(s)}` });
+                onSaved(s);
+                return;
+            }
+            // 1 shift per rute yang dicentang, lalu (opsional) salin operator + unit dari shift sebelumnya di rute itu.
+            const made: Shift[] = [];
+            let crew = 0;
+            for (const routeId of form.routeIds) {
+                const s = (await create.mutateAsync({ ...base, routeId, date: form.date })).data!;
+                made.push(s);
+                if (form.copyCrew) {
+                    const c = await copy.mutateAsync({ __params: { id: s.id } }).catch(() => null);
+                    crew += c?.data?.added ?? 0;
+                }
+            }
             toast({
-                title: shift ? 'Shift diubah' : `Shift ${s.name} dibuat`,
-                body: `${r?.route.name ?? ''} · ${span(s)}`,
+                title:
+                    made.length === 1
+                        ? `Shift ${made[0].name} dibuat`
+                        : `${made.length} shift ${base.name} dibuat`,
+                body: `${span(made[0])}${form.copyCrew ? ` · ${crew} penugasan disalin dari shift sebelumnya` : ''}`,
             });
-            onSaved(s);
+            onSaved(made[0]);
         } catch (err) {
             toast({
                 title: shift ? 'Gagal ngubah shift' : 'Gagal bikin shift',
@@ -396,7 +448,9 @@ function ShiftForm({
                             {shift ? `Ubah shift ${shift.name}` : 'Shift baru'}
                         </DialogTitle>
                         <DialogDescription>
-                            1 shift = 1 rute. Driver & truk dibagi setelah shift dibuat.
+                            {shift
+                                ? '1 shift = 1 rute / fleet.'
+                                : 'Pilih satu atau beberapa rute: tiap rute jadi 1 shift. Operator & unit bisa langsung disalin dari shift sebelumnya.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -438,21 +492,97 @@ function ShiftForm({
                         </div>
                     )}
 
-                    <Field
-                        label="Rute"
-                        hint={started ? 'Rute nggak bisa diganti setelah shift mulai.' : undefined}
-                    >
-                        <Combobox
-                            value={form.routeId}
-                            onChange={(v) => set('routeId', v)}
-                            options={routes.map((x) => ({ value: x.id, label: x.name }))}
-                            placeholder="Pilih rute…"
-                            searchPlaceholder="Cari rute…"
-                            empty="Belum ada rute. Bikin di menu Titik & rute."
-                            disabled={started}
-                            aria-label="Rute"
-                        />
-                    </Field>
+                    {shift ? (
+                        <Field
+                            label="Rute / fleet"
+                            hint={
+                                started ? 'Rute nggak bisa diganti setelah shift mulai.' : undefined
+                            }
+                        >
+                            <Combobox
+                                value={form.routeId}
+                                onChange={(v) => set('routeId', v)}
+                                options={routes.map((x) => ({ value: x.id, label: x.name }))}
+                                placeholder="Pilih rute…"
+                                searchPlaceholder="Cari rute…"
+                                empty="Belum ada rute. Bikin di menu Front, dumping & rute."
+                                disabled={started}
+                                aria-label="Rute"
+                            />
+                        </Field>
+                    ) : (
+                        <fieldset className="flex flex-col gap-2">
+                            <legend className="mb-1 flex w-full items-center justify-between text-sm text-muted-foreground">
+                                <span>Rute / fleet ({form.routeIds.length} dipilih)</span>
+                                {routes.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="text-xs font-medium text-info hover:underline"
+                                        onClick={() =>
+                                            set(
+                                                'routeIds',
+                                                form.routeIds.length === routes.length
+                                                    ? []
+                                                    : routes.map((x) => x.id),
+                                            )
+                                        }
+                                    >
+                                        {form.routeIds.length === routes.length
+                                            ? 'Kosongkan'
+                                            : 'Pilih semua'}
+                                    </button>
+                                )}
+                            </legend>
+                            {routes.length === 0 ? (
+                                <Note tone="warning">
+                                    Belum ada rute. Bikin di menu Front, dumping & rute.
+                                </Note>
+                            ) : (
+                                <div className="grid max-h-44 gap-1.5 overflow-y-auto sm:grid-cols-2">
+                                    {routes.map((x) => {
+                                        const on = form.routeIds.includes(x.id);
+                                        return (
+                                            <Label
+                                                key={x.id}
+                                                className={cn(
+                                                    'min-h-11 cursor-pointer gap-2.5 rounded-lg border px-3 py-2 font-normal',
+                                                    on && 'border-info bg-info-soft',
+                                                )}
+                                            >
+                                                <Checkbox
+                                                    checked={on}
+                                                    onCheckedChange={(v) =>
+                                                        set(
+                                                            'routeIds',
+                                                            v
+                                                                ? [...form.routeIds, x.id]
+                                                                : form.routeIds.filter(
+                                                                      (id) => id !== x.id,
+                                                                  ),
+                                                        )
+                                                    }
+                                                />
+                                                <span className="truncate">{x.name}</span>
+                                            </Label>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            <Label className="min-h-11 gap-2.5 rounded-lg border px-3 py-2 font-normal">
+                                <Checkbox
+                                    checked={form.copyCrew}
+                                    onCheckedChange={(v) => set('copyCrew', Boolean(v))}
+                                />
+                                <span className="flex flex-col">
+                                    <span>Salin penugasan dari shift sebelumnya</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        Operator & unit yang sama dengan shift terakhir di rute itu
+                                        (yang bentrok dilewati).
+                                    </span>
+                                </span>
+                            </Label>
+                        </fieldset>
+                    )}
                     <div className="grid grid-cols-2 gap-3">
                         <Field label="Nama shift">
                             <Input
@@ -496,7 +626,7 @@ function ShiftForm({
                             Jam selesai lebih kecil dari jam mulai, jadi shift selesai besoknya.
                         </Note>
                     )}
-                    {form.name && r && (
+                    {shift && form.name && r && (
                         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-brand-soft px-3 py-2 text-[13px]">
                             <b>Shift {form.name}</b> untuk rute{' '}
                             <RoutePair from={r.from} to={r.to} />
@@ -528,8 +658,19 @@ function ShiftForm({
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Batal
                         </Button>
-                        <Button type="submit" disabled={saving || !form.routeId}>
-                            {saving ? 'Menyimpan…' : shift ? 'Simpan' : 'Bikin shift'}
+                        <Button
+                            type="submit"
+                            disabled={
+                                saving || (shift ? !form.routeId : form.routeIds.length === 0)
+                            }
+                        >
+                            {saving
+                                ? 'Menyimpan…'
+                                : shift
+                                  ? 'Simpan'
+                                  : form.routeIds.length > 1
+                                    ? `Bikin ${form.routeIds.length} shift`
+                                    : 'Bikin shift'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -749,7 +890,7 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
                 className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5"
                 aria-label="Ringkasan shift"
             >
-                <Stat label="Driver bertugas" value={onDuty(s)} />
+                <Stat label="Operator bertugas" value={onDuty(s)} />
                 <Stat
                     label="Ritase (berangkat)"
                     value={done.length}
