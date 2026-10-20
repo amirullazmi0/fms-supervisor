@@ -69,7 +69,7 @@ export default function SetUnitStatus({
             });
             onOpenChange(false);
         } catch (err) {
-            toast({ title: 'Gagal nyimpen status', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan status', body: errText(err), level: 'crit' });
         }
     };
 

@@ -1,6 +1,6 @@
 'use client';
-// Tabel ritase tersimpan: berangkat dari loading, sampai unloading, durasi, berhenti, BBM.
-// Di HP tabelnya geser horizontal, kolom pertama nempel.
+// Tabel ritase tersimpan: berangkat dari front loading, tiba di dumping, durasi, berhenti, BBM.
+// Di HP tabel bergeser horizontal, kolom pertama tetap menempel.
 import { fmtDuration, fmtHm, fmtKm, fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';

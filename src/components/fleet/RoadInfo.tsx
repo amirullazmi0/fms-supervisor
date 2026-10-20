@@ -1,6 +1,6 @@
 'use client';
-// Jalur jalan loading → unloading dan estimasi waktu tempuh truk.
-// Kalau server routing nggak kejangkau, tampilin perkiraan kasar dari jarak lurus.
+// Jalur jalan front loading → dumping dan estimasi waktu tempuh unit.
+// Bila server routing tidak terjangkau, tampilkan perkiraan kasar dari jarak lurus.
 import type { ReactNode } from 'react';
 import { fmtDuration, fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ export interface RoadState {
     error: string | null;
 }
 
-// Perkiraan kasar: jalan biasanya ±1,4× jarak lurus, truk rata-rata 40 km/jam.
+// Perkiraan kasar: jalan biasanya ±1,4× jarak lurus, unit rata-rata 40 km/jam.
 const DETOUR = 1.4;
 const TRUCK_KMH = 40;
 
@@ -24,7 +24,7 @@ interface Props {
     from: LatLng;
     to: LatLng;
     road: RoadState;
-    roadBack?: RoadState; // jalur pulang (unloading → loading)
+    roadBack?: RoadState; // jalur return (dumping → front loading)
     active: number;
     onActive: (i: number) => void;
     history: RouteHistory | null; // null = rute belum disimpan / belum dimuat
@@ -43,7 +43,7 @@ export default function RoadInfo(props: Props) {
                     />
                     <UsualInfo
                         path={props.history.paths?.back}
-                        title="Jalan pulang (dumping → loading)"
+                        title="Jalan return (dumping → front loading)"
                         line="back"
                     />
                 </>
@@ -136,7 +136,7 @@ function HistoryInfo({ history: h }: { history: RouteHistory | null }) {
     );
 }
 
-// Jalan yang biasa dilalui driver di satu arah (jejak GPS yang paling mirip ritase lain).
+// Jalan yang biasa dilalui operator di satu arah (jejak GPS yang paling mirip ritase lain).
 function UsualInfo({
     path,
     title,
@@ -171,12 +171,12 @@ function UsualInfo({
     );
 }
 
-// Jalur pulang dari routing (garis oranye putus-putus di peta).
+// Jalur return dari routing (garis oranye putus-putus di peta).
 function BackInfo({ road }: { road?: RoadState }) {
     const p = road?.data?.paths[0];
     if (!road || road.loading || !p) return null;
     return (
-        <Box line="back" title="Jalur pulang (dumping → loading)">
+        <Box line="back" title="Jalur return (dumping → front loading)">
             <Nums
                 items={[
                     ['Jarak', km(p.distance)],
@@ -188,14 +188,14 @@ function BackInfo({ road }: { road?: RoadState }) {
     );
 }
 
-// Dari routing (OSRM / data jalan OSM), atau perkiraan kasar kalau dua-duanya gagal.
+// Dari routing (OSRM / data jalan OSM), atau perkiraan kasar bila keduanya gagal.
 function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
     const straight = distanceM(from, to);
 
-    if (road.loading) return <Empty>Nyari jalur jalan…</Empty>;
+    if (road.loading) return <Empty>Mencari jalur jalan…</Empty>;
 
     if (!road.data) {
-        if (history?.trips) return null; // udah ada estimasi dari perjalanan asli, perkiraan kasar nggak perlu
+        if (history?.trips) return null; // sudah ada estimasi dari ritase aktual, perkiraan kasar tidak diperlukan
         const est = straight * DETOUR;
         return (
             <Box line="rough" title="Estimasi kasar">
@@ -206,7 +206,7 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
                     ]}
                 />
                 <Empty className="text-xs">
-                    Jalur jalan nggak bisa diambil{road.error ? ` (${road.error})` : ''}. Ini
+                    Jalur jalan tidak dapat diambil{road.error ? ` (${road.error})` : ''}. Ini
                     perkiraan dari jarak lurus {km(straight)} × {DETOUR} dengan kecepatan unit{' '}
                     {TRUCK_KMH} km/jam.
                 </Empty>
@@ -246,8 +246,8 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
                 ))}
             </ol>
             <Empty className="text-xs">
-                Dari {road.data.source}. Estimasi truk = waktu mobil × {fmtNum(truckFactor, 1)},
-                belum termasuk macet &amp; istirahat.
+                Dari {road.data.source}. Estimasi unit = waktu kendaraan ringan ×{' '}
+                {fmtNum(truckFactor, 1)}, belum termasuk macet &amp; istirahat.
             </Empty>
         </Box>
     );

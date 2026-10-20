@@ -1,5 +1,5 @@
-// Lagi ngapain unit sekarang & di mana, dari posisi GPS terakhir terhadap front loading / dumping
-// rutenya (plus zona antre / spot kalau ada) dan arah hadap unit.
+// Aktivitas unit saat ini & lokasinya, dari posisi GPS terakhir terhadap front loading / dumping
+// rutenya (beserta zona antre / spot bila ada) dan arah hadap unit.
 import { distanceM } from '@/lib/geo';
 import type { Device, Site, SiteZone } from '@/types/fleet';
 
@@ -36,7 +36,7 @@ export const ACTIVITY_TONE: Record<ActivityKind, string> = {
 };
 
 const STILL_KMH = 3;
-const APPROACH_M = 300; // antre biasanya nggak jauh dari radius titik
+const APPROACH_M = 300; // antre biasanya tidak jauh dari radius titik
 const STALE_MS = 10 * 60e3;
 
 function bearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {

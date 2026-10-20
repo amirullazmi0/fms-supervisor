@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export const useToast = (): ToastFn => useContext(ToastCtx);
 
-// Notifikasi sistem (kalau tab lagi nggak dilihat dan izin udah dikasih).
+// Notifikasi sistem (bila tab sedang tidak dilihat dan izin sudah diberikan).
 export function notify(title: string, body: string): void {
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         try {

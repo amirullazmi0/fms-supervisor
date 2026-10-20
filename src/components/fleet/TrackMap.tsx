@@ -48,7 +48,7 @@ function truckPopup(d: Device, job: Duty | undefined): string {
                   'Operator',
                   `${esc(job.driverName)} <span class="muted">(${esc(job.shiftName)})</span>`,
               ]
-            : ['Tugas', 'Nganggur'],
+            : ['Tugas', 'Tidak bertugas'],
     );
     if (job) rows.push(['Rute', esc(job.routeName)]);
     rows.push(['Update', ago(lastHeard(d))]);
@@ -65,14 +65,14 @@ interface Props {
     selected: string | null;
     onSelect: (imei: string) => void;
     day: DaySummary | null;
-    focus: number | null; // index segmen yang lagi disorot
+    focus: number | null; // index segmen yang sedang disorot
     playhead: TrackPoint | null;
     follow: boolean;
-    fitKey: string; // berubah = peta di-zoom ulang ke rute (ganti truk / ganti tanggal)
-    sites: Site[]; // titik loading/unloading truk yang dipilih
-    siteRoles: Map<string, SiteType>; // peran tiap titik di rute truk
-    routeLines: { id: string; name: string; coords: [number, number][]; actual: boolean }[]; // jalur rute truk
-    highlight: { start: number; end: number } | null; // ritase yang lagi disorot
+    fitKey: string; // berubah = peta di-zoom ulang ke rute (ganti unit / ganti tanggal)
+    sites: Site[]; // front loading/dumping unit yang dipilih
+    siteRoles: Map<string, SiteType>; // peran tiap titik di rute unit
+    routeLines: { id: string; name: string; coords: [number, number][]; actual: boolean }[]; // jalur rute unit
+    highlight: { start: number; end: number } | null; // ritase yang sedang disorot
     basemap: Basemap; // peta / satelit
     showRoutes: boolean; // lapisan titik & jalur rute
     className?: string;
@@ -103,7 +103,7 @@ export default function TrackMap({
     const lineLayer = useRef<L.LayerGroup | null>(null);
     const hlLayer = useRef<L.LayerGroup | null>(null);
     const hlFitted = useRef('');
-    const openSeg = useRef<string | null>(null); // popup segmen yang lagi kebuka, dibuka lagi setelah rute digambar ulang
+    const openSeg = useRef<string | null>(null); // popup segmen yang sedang terbuka, dibuka kembali setelah rute digambar ulang
     const play = useRef<L.Marker | null>(null);
     const setBase = useRef<((b: Basemap) => void) | null>(null);
     const fitted = useRef('');
@@ -138,7 +138,7 @@ export default function TrackMap({
 
     useEffect(() => setBase.current?.(basemap), [basemap]);
 
-    // Lapisan titik & jalur rute bisa disembunyiin (tombol Lapisan).
+    // Lapisan titik & jalur rute dapat disembunyikan (tombol Lapisan).
     useEffect(() => {
         const m = map.current;
         if (!m) return;
@@ -149,7 +149,7 @@ export default function TrackMap({
         }
     }, [showRoutes]);
 
-    // Marker truk
+    // Marker unit
     useEffect(() => {
         const m = map.current;
         if (!m) return;
@@ -252,7 +252,7 @@ export default function TrackMap({
                     key,
                 )
                     .bindPopup(
-                        pop(`Berhenti ${stopNo}${seg.idle ? ' (mesin nyala)' : ''}`, [
+                        pop(`Berhenti ${stopNo}${seg.idle ? ' (mesin menyala)' : ''}`, [
                             ['Waktu', `${fmtHm(seg.start)}–${fmtHm(seg.end)}`],
                             ['Lama', fmtDuration(seg.end - seg.start)],
                             ...(seg.place ? [['Lokasi', esc(seg.place)] as [string, string]] : []),
@@ -285,7 +285,7 @@ export default function TrackMap({
         }
     }, [day, focus, fitKey]);
 
-    // Titik loading/unloading
+    // Front loading/dumping
     useEffect(() => {
         if (!siteLayer.current) return;
         const name = (imei: string) => {
@@ -295,7 +295,7 @@ export default function TrackMap({
         drawSites(siteLayer.current, sites, { truckName: name, roles: siteRoles });
     }, [sites, siteRoles]);
 
-    // Jalur rute truk (di bawah rute hari ini): hijau = jalan asli ritase terakhir, putus-putus = belum pernah jalan.
+    // Jalur rute unit (di bawah rute hari ini): hijau = jalur aktual ritase terakhir, putus-putus = belum pernah dilalui.
     useEffect(() => {
         const g = lineLayer.current;
         if (!g) return;
@@ -321,7 +321,7 @@ export default function TrackMap({
         }
     }, [routeLines]);
 
-    // Ritase yang dipilih: rute dari keluar loading sampai tiba di unloading
+    // Ritase yang dipilih: rute dari keluar front loading sampai tiba di dumping
     useEffect(() => {
         const m = map.current;
         const g = hlLayer.current;
@@ -337,7 +337,7 @@ export default function TrackMap({
         if (pts.length < 2) return;
         L.polyline(pts, { color: '#ffffff', weight: 9, opacity: 0.9 }).addTo(g);
         L.polyline(pts, { color: '#7c3aed', weight: 5, opacity: 0.95 }).addTo(g);
-        // Zoom cuma waktu ritase-nya ganti, bukan tiap data baru masuk.
+        // Zoom hanya saat ritase berganti, bukan setiap data baru masuk.
         const key = `${highlight.start}-${highlight.end}`;
         if (hlFitted.current !== key) {
             hlFitted.current = key;
@@ -357,7 +357,7 @@ export default function TrackMap({
         if (seg.type === 'stop' || pts.length < 2)
             m.setView([seg.to.lat, seg.to.lng], Math.max(m.getZoom(), 17));
         else m.fitBounds(L.latLngBounds(pts), { padding: [60, 60], maxZoom: 17 });
-        // cuma saat fokus berubah, bukan tiap data baru
+        // hanya saat fokus berubah, bukan setiap data baru
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [focus]);
 
@@ -381,7 +381,7 @@ export default function TrackMap({
         if (!m.getBounds().pad(-0.15).contains(ll)) m.panTo(ll, { animate: true });
     }, [playhead]);
 
-    // Ikuti truk yang dipilih (kalau lagi nggak playback)
+    // Ikuti unit yang dipilih (bila tidak sedang playback)
     const sel = devices.find((d) => d.imei === selected);
     const lat = sel?.pos?.lat;
     const lng = sel?.pos?.lng;

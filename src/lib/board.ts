@@ -33,7 +33,7 @@ export interface BoardUnit {
     activity: Activity;
     mdt: UnitStatusLog | null;
     column: BoardColumn;
-    since: number | null; // mulai status MDT (kalau ada)
+    since: number | null; // mulai status MDT (bila ada)
 }
 
 // Kolom papan: status MDT menang (operator yang paling tahu: sholat, BD, …), lalu GPS.

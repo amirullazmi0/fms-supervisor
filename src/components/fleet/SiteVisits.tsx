@@ -1,6 +1,6 @@
 'use client';
-// Laporan → waktu di titik loading / unloading: rata-rata + daftar mentah tiap kali truk
-// ada di titik (masuk, keluar, lama). Truk yang masih di dalam ikut dihitung sampai sekarang.
+// Laporan → waktu di front loading / dumping: rata-rata + daftar mentah setiap kali unit
+// berada di titik (masuk, keluar, durasi). Unit yang masih di dalam ikut dihitung sampai sekarang.
 import { useState } from 'react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import Pager from '@/components/custom/pager';
@@ -59,7 +59,7 @@ export default function SiteVisits({ query }: { query: string }) {
     return (
         <Card className="gap-3 pb-1">
             <div className="flex flex-wrap items-center justify-between gap-2 px-4">
-                <h2 className="m-0 text-base font-semibold">Waktu di titik loading & unloading</h2>
+                <h2 className="m-0 text-base font-semibold">Waktu di front loading & dumping</h2>
                 <ToggleGroup
                     type="single"
                     value={role}
@@ -73,15 +73,15 @@ export default function SiteVisits({ query }: { query: string }) {
             </div>
             {stats && (
                 <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4">
-                    <Avg label="Rata-rata di loading" s={stats.loading} />
+                    <Avg label="Rata-rata di front loading" s={stats.loading} />
                     <Stat
-                        label="Terlama di loading"
+                        label="Terlama di front loading"
                         value={
                             stats.loading.maxDwellMs ? fmtDuration(stats.loading.maxDwellMs) : '—'
                         }
                         sub={
                             stats.loading.inside
-                                ? `${stats.loading.inside} unit lagi di dalam`
+                                ? `${stats.loading.inside} unit sedang di dalam`
                                 : undefined
                         }
                     />
@@ -95,7 +95,7 @@ export default function SiteVisits({ query }: { query: string }) {
                         }
                         sub={
                             stats.unloading.inside
-                                ? `${stats.unloading.inside} unit lagi di dalam`
+                                ? `${stats.unloading.inside} unit sedang di dalam`
                                 : undefined
                         }
                     />
@@ -147,7 +147,7 @@ export default function SiteVisits({ query }: { query: string }) {
                                     {v.departAt ? (
                                         fmtHm(v.departAt)
                                     ) : v.status === 'finished' ? (
-                                        <Badge variant="muted">Selesai (shift beres)</Badge>
+                                        <Badge variant="muted">Selesai (shift ditutup)</Badge>
                                     ) : (
                                         <Badge variant="info">Masih di dalam</Badge>
                                     )}

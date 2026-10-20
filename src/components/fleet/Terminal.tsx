@@ -20,7 +20,7 @@ const TONE: Record<TermLine['dir'], string> = {
     err: 'text-red-400',
 };
 
-// Panel log kecil (perintah GPRS). Selalu gelap kayak terminal.
+// Panel log kecil (perintah GPRS). Selalu gelap seperti terminal.
 export function Terminal({
     lines,
     empty,

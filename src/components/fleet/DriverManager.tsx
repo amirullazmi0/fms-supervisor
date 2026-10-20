@@ -1,6 +1,6 @@
 'use client';
-// Daftar operator / driver: tambah, ubah, nonaktifkan, atur PIN tablet MDT. Operator nggak login
-// ke dashboard; datanya buat penugasan, laporan, dan login di MDT kabin (NIK + PIN).
+// Daftar operator: tambah, ubah, nonaktifkan, atur PIN tablet MDT. Operator tidak login
+// ke dashboard; datanya dipakai untuk penugasan, laporan, dan login di MDT kabin (NIK + PIN).
 import { useMemo, useState } from 'react';
 import { useNow } from '@/lib/useNow';
 import type { FormEvent } from 'react';
@@ -61,7 +61,7 @@ interface OperatorDuty {
     unit: string;
     routeName: string;
     mdt: UnitStatusLog | null; // status yang dipilih di MDT (unit yang dia bawa)
-    activity: Activity | null; // lagi ngapain & di mana (dari GPS unitnya), cuma kalau bertugas
+    activity: Activity | null; // aktivitas & lokasi saat ini (dari GPS unitnya), hanya bila bertugas
 }
 
 // driverId → tugasnya. Shift aktif menang atas yang terjadwal; yang terjadwal ambil yang paling dekat.
@@ -189,7 +189,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
             });
             close();
         } catch (err) {
-            toast({ title: 'Gagal nyimpen operator', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan data operator', body: errText(err), level: 'crit' });
         } finally {
             setSaving(false);
         }
@@ -203,7 +203,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
                 body:
                     r.result === 'deleted'
                         ? d.name
-                        : `${d.name} pernah ditugaskan, jadi datanya disimpan buat laporan.`,
+                        : `${d.name} pernah ditugaskan, jadi datanya disimpan untuk laporan.`,
                 level: 'warn',
             });
         } catch (err) {
@@ -251,11 +251,11 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
             {drivers.length === 0 ? (
                 <Empty>
                     {canEdit
-                        ? 'Belum ada operator. Tambah dulu sebelum bikin penugasan shift.'
+                        ? 'Belum ada operator. Tambahkan operator sebelum membuat penugasan shift.'
                         : 'Belum ada operator.'}
                 </Empty>
             ) : shown.length === 0 ? (
-                <Empty>Nggak ada operator yang cocok.</Empty>
+                <Empty>Tidak ada operator yang cocok.</Empty>
             ) : (
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
                     {shown.map((d) => {
@@ -385,7 +385,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
                                     {editing ? 'Ubah operator' : 'Operator baru'}
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Operator nggak login ke dashboard. Datanya dipakai buat
+                                    Operator tidak login ke dashboard. Datanya dipakai untuk
                                     penugasan shift, laporan, dan login MDT (NIK + PIN).
                                 </DialogDescription>
                             </DialogHeader>
@@ -420,7 +420,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
                             </div>
                             <Field
                                 label="ID iButton (opsional)"
-                                hint="Kalau operator tap kunci iButton di unit."
+                                hint="Bila operator men-tap kunci iButton di unit."
                             >
                                 <Input
                                     className="font-mono"
@@ -444,8 +444,8 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
                                 <span className="flex flex-col gap-1">
                                     <span>Aktif</span>
                                     <span className="text-xs font-normal text-muted-foreground">
-                                        Operator nonaktif nggak muncul di pilihan penugasan dan
-                                        nggak bisa login MDT.
+                                        Operator nonaktif tidak muncul di pilihan penugasan dan
+                                        tidak dapat login ke MDT.
                                     </span>
                                 </span>
                                 <Switch
@@ -470,7 +470,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
                 open={toDelete != null}
                 onOpenChange={(o) => !o && setToDelete(null)}
                 title={`Hapus ${toDelete?.name ?? 'operator'}?`}
-                description="Kalau operator ini pernah ditugaskan, datanya cuma dinonaktifkan biar laporan lama tetap utuh."
+                description="Bila operator ini pernah ditugaskan, datanya hanya dinonaktifkan agar laporan lama tetap utuh."
                 confirmLabel="Hapus"
                 destructive
                 onConfirm={() => toDelete && void remove(toDelete)}
@@ -480,7 +480,7 @@ export default function DriverManager({ canEdit }: { canEdit: boolean }) {
     );
 }
 
-// PIN 4–8 angka buat login di tablet MDT (NIK + PIN). PIN lama langsung nggak berlaku.
+// PIN 4–8 angka untuk login di tablet MDT (NIK + PIN). PIN lama langsung tidak berlaku.
 function PinDialog({ d, onClose }: { d: Driver; onClose: () => void }) {
     const toast = useToast();
     const [pin, setPin] = useState('');
@@ -497,11 +497,11 @@ function PinDialog({ d, onClose }: { d: Driver; onClose: () => void }) {
             await save.mutateAsync({ pin });
             toast({
                 title: 'PIN MDT disimpan',
-                body: `${d.name} bisa login di tablet pakai NIK ${d.employeeNo ?? '(isi NIK dulu)'} + PIN ini.`,
+                body: `${d.name} bisa login di tablet pakai NIK ${d.employeeNo ?? '(isi NIK terlebih dahulu)'} + PIN ini.`,
             });
             onClose();
         } catch (err) {
-            toast({ title: 'Gagal nyimpen PIN', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal menyimpan PIN', body: errText(err), level: 'crit' });
         }
     };
     return (
@@ -513,7 +513,7 @@ function PinDialog({ d, onClose }: { d: Driver; onClose: () => void }) {
                         <DialogDescription>
                             {d.employeeNo
                                 ? `Login di tablet kabin: NIK ${d.employeeNo} + PIN.`
-                                : 'Operator ini belum punya NIK. Isi NIK dulu supaya bisa login di MDT.'}
+                                : 'Operator ini belum memiliki NIK. Isi NIK terlebih dahulu agar dapat login di MDT.'}
                         </DialogDescription>
                     </DialogHeader>
                     <Field

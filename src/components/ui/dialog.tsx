@@ -75,7 +75,7 @@ export function DialogDescription({
 }
 
 // ---------- Konfirmasi (AlertDialog) ----------
-// Dipakai buat aksi yang nggak bisa dibatalin: hapus, selesaikan shift, dll.
+// Dipakai untuk aksi yang tidak dapat dibatalkan: hapus, selesaikan shift, dll.
 export function ConfirmDialog({
     open,
     onOpenChange,
@@ -129,7 +129,7 @@ export function ConfirmDialog({
     );
 }
 
-// ---------- Sheet (panel geser dari samping, buat menu di HP) ----------
+// ---------- Sheet (panel geser dari samping, untuk menu di HP) ----------
 export function SheetContent({
     className,
     children,

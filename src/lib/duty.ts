@@ -1,4 +1,4 @@
-// Truk yang lagi bertugas: dari penugasan shift aktif di tiap rute (Route.onDuty).
+// Unit yang sedang bertugas: dari penugasan shift aktif di setiap rute (Route.onDuty).
 import { useMemo } from 'react';
 import { useData } from '@/provider/StreamProvider';
 
@@ -9,16 +9,16 @@ export interface Duty {
     driverName: string;
     routeId: string;
     routeName: string;
-    // active = lagi shift; finishing = shift udah distop, nyelesaiin ritase terakhir ke unloading.
+    // active = sedang shift; finishing = shift sudah dihentikan, menyelesaikan ritase terakhir ke dumping.
     phase: 'active' | 'finishing';
 }
 
-// Truk yang shift-nya udah beres (12 jam terakhir) dan sekarang nggak bertugas.
+// Unit yang shift-nya sudah selesai (12 jam terakhir) dan saat ini tidak bertugas.
 export interface DoneDuty extends Omit<Duty, 'phase'> {
     closedAt: number | null;
 }
 
-// imei -> tugasnya sekarang. Truk yang nggak ada di sini = nganggur.
+// imei -> tugasnya saat ini. Unit yang tidak ada di sini = tidak bertugas.
 export function useDuty(): Map<string, Duty> {
     const { routes } = useData();
     return useMemo(() => {
@@ -42,7 +42,7 @@ export function useDuty(): Map<string, Duty> {
     }, [routes]);
 }
 
-// imei -> shift yang baru beres (truk "Selesai"), cuma buat truk yang lagi nggak bertugas.
+// imei -> shift yang baru selesai (unit "Selesai"), hanya untuk unit yang sedang tidak bertugas.
 export function useDone(): Map<string, DoneDuty> {
     const { routes } = useData();
     return useMemo(() => {
@@ -68,7 +68,7 @@ export function useDone(): Map<string, DoneDuty> {
     }, [routes]);
 }
 
-// Label status kerja truk: Bertugas / Menyelesaikan ritase / Selesai / Nganggur.
+// Label status kerja unit: Bertugas / Menyelesaikan ritase / Selesai / Tidak bertugas.
 export function workState(
     job: Duty | undefined,
     done: DoneDuty | undefined,
@@ -76,5 +76,5 @@ export function workState(
     if (job?.phase === 'finishing') return { label: 'Menyelesaikan ritase', variant: 'warning' };
     if (job) return { label: 'Bertugas', variant: 'success' };
     if (done) return { label: 'Selesai', variant: 'info' };
-    return { label: 'Nganggur', variant: 'muted' };
+    return { label: 'Tidak bertugas', variant: 'muted' };
 }

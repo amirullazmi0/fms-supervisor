@@ -11,11 +11,11 @@ export const STATUS_LABEL: Record<Status, string> = {
     offline: 'Offline',
 };
 
-// Tracker Teltonika rutin nutup koneksi kalau lagi nggak ada data, terus buka lagi pas mau kirim.
-// Jadi "offline" bukan berarti koneksinya ketutup, tapi alat udah lama nggak ngirim apa-apa.
+// Tracker Teltonika rutin menutup koneksi bila tidak ada data, lalu membukanya kembali saat akan mengirim.
+// Jadi "offline" bukan berarti koneksinya tertutup, tetapi alat sudah lama tidak mengirim data.
 export const STALE_MS = 90 * 60e3;
 
-// Kapan terakhir ada kabar dari alat (koneksi atau record), tetap kebaca setelah server restart.
+// Kapan terakhir ada kabar dari alat (koneksi atau record), tetap terbaca setelah server restart.
 export const lastHeard = (d: Device): number => Math.max(d.lastSeen ?? 0, d.last?.time ?? 0);
 
 export function statusOf(d: Device): Status {
@@ -78,7 +78,7 @@ export function fmtIo(io: IoTable, id: string | number, raw: IoValue | undefined
     return `${fmtNum(v, decimalsFor(def.scale))}${def.unit ? ` ${def.unit}` : ''}`;
 }
 
-// Nilai IO sebagai angka (IO bisa berupa string hex buat parameter NX).
+// Nilai IO sebagai angka (IO bisa berupa string hex untuk parameter NX).
 export const num = (v: IoValue | undefined): number | null => (typeof v === 'number' ? v : null);
 
 // "1 j 12 mnt", "45 mnt", "30 dtk"
@@ -93,11 +93,11 @@ export function fmtDuration(ms: number): string {
 
 export const fmtKm = (meters: number): string => fmtNum(meters / 1000, meters < 10000 ? 1 : 0);
 
-// Label truk: plat nomor kalau ada, kalau nggak nama alat.
+// Label unit: plat nomor bila ada, selain itu nama alat.
 export const truckLabel = (d: Pick<Device, 'name' | 'imei' | 'plate'>): string =>
     d.plate || displayName(d);
 
-// Tanggal lokal YYYY-MM-DD (buat input type=date dan tanggal kerja shift).
+// Tanggal lokal YYYY-MM-DD (untuk input type=date dan tanggal kerja shift).
 const pad2 = (n: number) => String(n).padStart(2, '0');
 export const dateKey = (d: Date | number = new Date()): string => {
     const x = typeof d === 'number' ? new Date(d) : d;

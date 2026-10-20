@@ -45,7 +45,7 @@ function publicOrigin(req: NextRequest): { origin: string; https: boolean } {
 function originError(req: NextRequest): NextResponse | null {
     if (req.method === 'GET' || req.method === 'HEAD' || IS_DEV) return null;
     const origin = req.headers.get('origin');
-    if (origin && origin !== publicOrigin(req).origin) return fail('Origin nggak diizinkan', 403);
+    if (origin && origin !== publicOrigin(req).origin) return fail('Origin tidak diizinkan', 403);
     return null;
 }
 
@@ -89,12 +89,12 @@ async function readJson<T>(res: Response): Promise<Envelope<T>> {
     } catch {
         return {
             success: false,
-            message: IS_DEV ? text.slice(0, 500) : 'Respon server nggak valid',
+            message: IS_DEV ? text.slice(0, 500) : 'Respons server tidak valid',
         };
     }
 }
 
-const unreachable = () => fail('Server FMS nggak bisa dihubungi', 502);
+const unreachable = () => fail('Server FMS tidak dapat dihubungi', 502);
 
 // ---------- refresh (one at a time per refresh token: the backend rotates it) ----------
 const inflight = new Map<string, { at: number; promise: Promise<Tokens | null> }>();
@@ -180,7 +180,7 @@ async function renew(req: NextRequest) {
     const rt = req.cookies.get(SESSION.refresh)?.value;
     const t = rt ? await refresh(rt) : null;
     if (!t) {
-        const res = fail('Sesi habis, login lagi', 401);
+        const res = fail('Sesi berakhir, silakan login kembali', 401);
         clearSession(res);
         return res;
     }

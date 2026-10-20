@@ -15,7 +15,7 @@ export function Label({ className, ...props }: ComponentProps<typeof LabelPrimit
     );
 }
 
-// Label + kolom isian + keterangan, buat form.
+// Label + kolom isian + keterangan, untuk form.
 export function Field({
     label,
     hint,

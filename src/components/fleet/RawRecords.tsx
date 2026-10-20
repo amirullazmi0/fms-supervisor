@@ -1,5 +1,5 @@
 'use client';
-// Lacak truk → Data mentah: tiap paket yang dikirim FMC150 di hari yang dipilih, semua nilai
+// Lacak unit → Data mentah: setiap paket yang dikirim FMC150 di hari yang dipilih, semua nilai
 // IO/CAN-nya (nama & satuan dari io-map). Paging di server, terbaru di atas.
 import { useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
@@ -62,7 +62,7 @@ const time = (ms: number) =>
         minute: '2-digit',
         second: '2-digit',
     });
-// Tampilan ringkas: kolom IO yang paling sering dicek. Lengkap: semua IO yang ada di halaman ini.
+// Tampilan ringkas: kolom IO yang paling sering diperiksa. Lengkap: semua IO yang ada di halaman ini.
 const SHORT: string[] = ['239', '240', '66', '84', '89', '16'];
 const groupRank = (g: IoGroup | undefined) => (g ? GROUP_ORDER.indexOf(g) : GROUP_ORDER.length);
 const osm = (lat: number, lng: number) =>
@@ -144,8 +144,8 @@ export default function RawRecords({ imei, date }: { imei: string; date: string 
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs text-muted-foreground">
-                    Semua paket dari alat di tanggal ini, terbaru di atas. Geser ke kanan buat kolom
-                    lain, klik baris buat detail.
+                    Semua paket dari alat di tanggal ini, terbaru di atas. Geser ke kanan untuk
+                    kolom lain, klik baris untuk detail.
                 </span>
                 <div className="flex items-center gap-2">
                     <ToggleGroup
@@ -307,7 +307,7 @@ function RecordDetail({ r, io }: { r: RawRecord; io: IoTable }) {
                     ],
                     ['Kecepatan / arah', `${r.speed} km/jam · ${r.angle}°`],
                     ['Ketinggian', `${r.alt} m`],
-                    ['Satelit', `${r.sats}${r.valid ? '' : ' (posisi nggak valid)'}`],
+                    ['Satelit', `${r.sats}${r.valid ? '' : ' (posisi tidak valid)'}`],
                     ['Prioritas', String(r.priority)],
                     ['Event', r.eventIo ? `${io[r.eventIo]?.name ?? 'IO'} (${r.eventIo})` : '—'],
                 ]}

@@ -1,5 +1,5 @@
 // Gambar titik (master titik) di peta Leaflet: lingkaran sesuai radius + penanda.
-// Titik nggak punya jenis tetap. Kalau lagi nampilin rute, perannya (loading/unloading) dikasih lewat `roles`.
+// Titik tidak memiliki jenis tetap. Saat menampilkan rute, perannya (front loading / dumping) diberikan melalui `roles`.
 import L from 'leaflet';
 import type { Site, SiteType } from '@/types/fleet';
 
@@ -51,13 +51,13 @@ export function sitePopup(
 ): string {
     const trucks = s.imeis.length
         ? s.imeis.map((i) => escHtml(truckName(i))).join(', ')
-        : '<i>Nggak ada yang lagi jalan</i>';
+        : '<i>Tidak ada unit yang sedang beroperasi</i>';
     return `<div class="map-pop">
     <div class="mp-title"><span class="site-dot site-${role ?? 'none'}">${letter(role)}</span>${escHtml(s.name)}</div>
     <dl>
       ${role ? `<dt>Di rute ini</dt><dd>${ROLE_LABEL[role]}</dd>` : ''}
       <dt>Radius</dt><dd>${s.radius} m</dd>
-      <dt>Lagi jalan</dt><dd>${trucks}</dd>
+      <dt>Unit beroperasi</dt><dd>${trucks}</dd>
       <dt>Koordinat</dt><dd class="mono">${s.lat.toFixed(6)}, ${s.lng.toFixed(6)}</dd>
       ${s.note ? `<dt>Catatan</dt><dd>${escHtml(s.note)}</dd>` : ''}
     </dl>
@@ -68,10 +68,10 @@ interface DrawOpts {
     onClick?: (id: string) => void;
     selectedId?: string | null;
     truckName?: (imei: string) => string;
-    roles?: Map<string, SiteType>; // peran titik di rute yang lagi ditampilin
+    roles?: Map<string, SiteType>; // peran titik di rute yang sedang ditampilkan
 }
 
-// Lingkaran + penanda untuk semua titik ke dalam satu layer group (dikosongin dulu). Klik penanda = popup info.
+// Lingkaran + penanda untuk semua titik ke dalam satu layer group (dikosongkan terlebih dahulu). Klik penanda = popup info.
 export function drawSites(
     group: L.LayerGroup,
     sites: Site[],

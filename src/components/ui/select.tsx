@@ -117,8 +117,8 @@ export function SelectSeparator({
     );
 }
 
-// Select pendek siap pakai: daftar {value, label}. Radix nggak ngizinin value kosong, jadi
-// "nggak dipilih" pakai placeholder (value = '').
+// Select pendek siap pakai: daftar {value, label}. Radix tidak mengizinkan value kosong, jadi
+// "tidak dipilih" memakai placeholder (value = '').
 export function SimpleSelect({
     value,
     onChange,

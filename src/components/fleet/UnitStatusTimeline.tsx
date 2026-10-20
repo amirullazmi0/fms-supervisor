@@ -26,7 +26,7 @@ const BAR: Record<DelayCategory, string> = {
 export default function UnitStatusTimeline({ imei }: { imei: string }) {
     const can = useCan();
     const [editing, setEditing] = useState(false);
-    // `to` dikosongkan (server = sekarang) biar status baru tetap masuk saat di-refetch lewat stream.
+    // `to` dikosongkan (server = sekarang) agar status baru tetap masuk saat di-refetch lewat stream.
     const [range] = useState(() => ({ from: Date.now() - 24 * 3600e3 }));
     const logs = useQueryApiRequest<GlobalApiResponse<UnitStatusLog[]>>({
         key: 'unit-status',

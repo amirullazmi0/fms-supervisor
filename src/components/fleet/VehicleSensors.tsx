@@ -1,6 +1,6 @@
 'use client';
-// Kartu sensor kendaraan di Lacak truk: BBM, mesin, supir, input/suhu bak, pemutus mesin.
-// Tiap kartu nampilin "belum terpasang" kalau datanya belum ada, dan keisi otomatis begitu sensornya masuk.
+// Kartu sensor unit di Lacak unit: BBM, mesin, operator, input/suhu vessel, pemutus mesin.
+// Setiap kartu menampilkan "belum terpasang" bila datanya belum ada, dan terisi otomatis begitu data sensor masuk.
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Power, TriangleAlert, Plus } from 'lucide-react';
@@ -143,9 +143,9 @@ export default function VehicleSensors({ d, day }: Props) {
                 <Grid>
                     <Cell
                         label="Status"
-                        value={io[239] == null ? '—' : io[239] ? 'Nyala' : 'Mati'}
+                        value={io[239] == null ? '—' : io[239] ? 'Menyala' : 'Mati'}
                     />
-                    <Cell label="Nyala hari ini" value={day ? fmtDuration(day.engineMs) : '—'} />
+                    <Cell label="Menyala hari ini" value={day ? fmtDuration(day.engineMs) : '—'} />
                     <Cell label="RPM" value={rpm == null ? '—' : fmtNum(rpm)} />
                     <Cell
                         label="Suhu mesin"
@@ -164,7 +164,7 @@ export default function VehicleSensors({ d, day }: Props) {
 
             <SensorCard title="Operator" source="penugasan shift + iButton (1-Wire)">
                 <Grid>
-                    <Cell label="Bertugas" value={job?.driverName ?? 'Nganggur'} />
+                    <Cell label="Bertugas" value={job?.driverName ?? 'Tidak bertugas'} />
                     <Cell label="ID iButton" value={ibutton ?? '—'} mono />
                 </Grid>
             </SensorCard>
@@ -187,7 +187,7 @@ export default function VehicleSensors({ d, day }: Props) {
                 </Grid>
                 {io[2] == null && cargoTemp == null && (
                     <Empty>
-                        Sambung sensor pintu ke DIN2 dan sensor suhu ke 1-Wire kalau perlu.
+                        Sambung sensor pintu ke DIN2 dan sensor suhu ke 1-Wire bila diperlukan.
                     </Empty>
                 )}
             </SensorCard>
@@ -210,10 +210,11 @@ function EngineCut({ d }: { d: Device }) {
     const moving = speed > 5;
 
     let blocked: string | null = null;
-    if (!can(P.deviceCommand)) blocked = 'Akun ini nggak punya akses kirim perintah ke alat.';
-    else if (!d.online) blocked = 'Perintah cuma bisa dikirim pas koneksi alat terbuka.';
+    if (!can(P.deviceCommand))
+        blocked = 'Akun ini tidak memiliki akses untuk mengirim perintah ke alat.';
+    else if (!d.online) blocked = 'Perintah hanya dapat dikirim saat koneksi alat terbuka.';
     else if (moving && !active)
-        blocked = `Unit lagi jalan ${speed} km/jam. Matiin mesin cuma boleh pas unit berhenti.`;
+        blocked = `Unit sedang berjalan ${speed} km/jam. Mesin hanya boleh dimatikan saat unit berhenti.`;
 
     const send = async (on: boolean) => {
         setBusy(true);
@@ -249,7 +250,7 @@ function EngineCut({ d }: { d: Device }) {
             </div>
             <Empty>
                 {blocked ??
-                    'Perlu relay pemutus di kabel DOUT1. Kalau relay belum kepasang, perintah tetap jalan tapi mesin nggak kepengaruh.'}
+                    'Perlu relay pemutus di kabel DOUT1. Bila relay belum terpasang, perintah tetap terkirim tetapi mesin tidak terpengaruh.'}
             </Empty>
             <ConfirmDialog
                 open={confirm != null}
@@ -257,8 +258,8 @@ function EngineCut({ d }: { d: Device }) {
                 title={confirm === 'on' ? 'Putus mesin unit ini?' : 'Lepas pemutus mesin?'}
                 description={
                     confirm === 'on'
-                        ? 'Mesin bakal mati dan nggak bisa dinyalain sampai pemutus dilepas.'
-                        : 'Mesin bisa dinyalain lagi setelah ini.'
+                        ? 'Mesin akan mati dan tidak dapat dinyalakan sampai pemutus dilepas.'
+                        : 'Mesin dapat dinyalakan kembali setelah ini.'
                 }
                 confirmLabel={confirm === 'on' ? 'Ya, putus mesin' : 'Ya, lepas'}
                 destructive={confirm === 'on'}

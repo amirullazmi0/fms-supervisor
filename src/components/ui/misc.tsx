@@ -27,7 +27,7 @@ export function Separator({
     );
 }
 
-// ---------- Tabel (geser horizontal di kartunya kalau sempit) ----------
+// ---------- Tabel (geser horizontal di kartunya bila sempit) ----------
 export function Table({ className, ...props }: ComponentProps<'table'>) {
     return (
         <div className="relative w-full overflow-x-auto">
@@ -154,7 +154,7 @@ export function Note({
     return <div className={cn('rounded-lg px-3 py-2 text-[13px]', t, className)}>{children}</div>;
 }
 
-// ---------- Status truk ----------
+// ---------- Status unit ----------
 const STATUS_VARIANT: Record<Status, BadgeVariant> = {
     moving: 'info',
     idle: 'warning',
@@ -169,8 +169,8 @@ export function StatusBadge({ status, className }: { status: Status; className?:
     );
 }
 
-// ---------- Titik loading/unloading ----------
-// Titik: L (loading, hijau), U (unloading, oranye), atau tanpa peran (biru, master titik).
+// ---------- Front loading / dumping ----------
+// Titik: L (front loading, hijau), U (dumping, oranye), atau tanpa peran (biru, master titik).
 export function SiteDot({
     type,
     className,

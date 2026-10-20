@@ -1,5 +1,5 @@
 // Combobox: dropdown yang bisa dicari (shadcn: Popover + Command/cmdk).
-// Dipakai buat driver, truk, rute — datanya bisa puluhan.
+// Dipakai untuk operator, unit, rute — datanya bisa puluhan.
 import { useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
@@ -101,7 +101,7 @@ export interface ComboOption {
     value: string;
     label: string;
     hint?: string; // teks kecil di kanan (mis. "di Sore · Rute B", "terakhir")
-    keywords?: string[]; // tambahan kata buat pencarian
+    keywords?: string[]; // tambahan kata untuk pencarian
     disabled?: boolean;
 }
 
@@ -111,7 +111,7 @@ export function Combobox({
     options,
     placeholder = 'Pilih…',
     searchPlaceholder = 'Cari…',
-    empty = 'Nggak ketemu.',
+    empty = 'Tidak ditemukan.',
     className,
     size = 'default',
     disabled,

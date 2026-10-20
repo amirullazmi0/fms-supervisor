@@ -1,5 +1,5 @@
 'use client';
-// Speedometer setengah lingkaran. Busur jadi merah kalau lewat batas kecepatan.
+// Speedometer setengah lingkaran. Busur menjadi merah bila melewati batas kecepatan.
 import { cn } from '@/lib/utils';
 
 const W = 200;
@@ -20,7 +20,7 @@ interface Props {
     speed: number | null;
     max?: number;
     limit?: number;
-    stale?: boolean; // data udah lama, angka ditampilin redup
+    stale?: boolean; // data sudah lama, angka ditampilkan redup
     className?: string;
 }
 

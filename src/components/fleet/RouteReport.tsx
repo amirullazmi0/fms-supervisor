@@ -1,5 +1,5 @@
 'use client';
-// Ritase truk per rute: berangkat dari titik loading rute sampai tiba di titik unloading rute itu.
+// Ritase unit per rute: berangkat dari front loading rute sampai tiba di dumping rute tersebut.
 // Per ritase: durasi, jarak, berapa kali berhenti, lama berhenti, BBM.
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -40,7 +40,7 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
     const loading = query.isLoading;
     const load = (_quiet: boolean) => void query.refetch();
 
-    // Hari ini: hitung ulang waktu ada titik baru (ditunda biar nggak tiap detik). Titik diubah: hitung ulang.
+    // Hari ini: hitung ulang saat ada titik baru (ditunda agar tidak setiap detik). Titik diubah: hitung ulang.
     const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     useStream((msg) => {
         if (msg.type === 'sites' || (msg.type === 'point' && msg.imei === imei && isToday)) {
@@ -78,19 +78,19 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                 <>
                     <div className="grid grid-cols-2 gap-2">
                         <Stat
-                            label="Ritase (berangkat)"
+                            label="Ritase (hauling)"
                             value={String(report.totals.done)}
-                            sub={`${report.totals.backDone} pulang`}
+                            sub={`${report.totals.backDone} return`}
                             big
                         />
                         <Stat
-                            label="Rata-rata berangkat"
+                            label="Rata-rata hauling"
                             value={
                                 report.totals.done ? fmtDuration(report.totals.avgDurationMs) : '—'
                             }
                             sub={
                                 report.totals.backDone
-                                    ? `pulang ${fmtDuration(report.totals.backAvgMs)}`
+                                    ? `return ${fmtDuration(report.totals.backAvgMs)}`
                                     : undefined
                             }
                             big
@@ -114,7 +114,7 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                     </div>
                     {report.trips.length === 0 ? (
                         <Empty>
-                            Belum ada ritase di tanggal ini. Ritase kehitung setelah unit keluar
+                            Belum ada ritase pada tanggal ini. Ritase terhitung setelah unit keluar
                             dari front loading rute lalu masuk ke titik dumping rute yang sama.
                         </Empty>
                     ) : (

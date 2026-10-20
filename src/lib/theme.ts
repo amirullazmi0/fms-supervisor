@@ -22,7 +22,7 @@ export function readTheme(): ThemeMode {
     }
 }
 
-// Tailwind/shadcn pakai kelas `dark` di <html>. "system" ngikutin setelan OS (dan ikut berubah kalau OS ganti).
+// Tailwind/shadcn pakai kelas `dark` di <html>. "system" mengikuti setelan OS (dan ikut berubah bila OS berganti).
 const media =
     typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
@@ -37,7 +37,7 @@ function persist(mode: ThemeMode): void {
         if (mode === 'light') localStorage.removeItem(THEME_KEY);
         else localStorage.setItem(THEME_KEY, mode);
     } catch {
-        /* storage nggak tersedia, tema tetap kepasang buat sesi ini */
+        /* storage tidak tersedia, tema tetap terpasang untuk sesi ini */
     }
 }
 

@@ -62,7 +62,7 @@ import { notify, useToast } from '@/components/fleet/Toasts';
 const LIVE_TEXT: Record<LiveState, string> = {
     connecting: 'Menghubungkan…',
     on: 'Live',
-    off: 'Server putus, nyoba lagi…',
+    off: 'Koneksi server terputus, mencoba kembali…',
 };
 
 interface LayoutContext {
@@ -71,10 +71,10 @@ interface LayoutContext {
 
 const LayoutCtx = createContext<LayoutContext>({ setStats: () => {} });
 
-// Halaman bisa ngisi ringkasan di header lewat hook ini.
+// Halaman dapat mengisi ringkasan di header melalui hook ini.
 export const useLayout = () => useContext(LayoutCtx);
 
-// Menu cuma nampilin halaman yang boleh dibuka role user (permission).
+// Menu hanya menampilkan halaman yang boleh dibuka role user (permission).
 // Dikelompokkan sesuai kerja dispatcher. `bottom` = muncul di bar bawah HP (maks 4).
 type NavGroup = 'Operasional' | 'Produksi' | 'Penugasan' | 'Master data';
 const NAV: {
@@ -188,7 +188,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             try {
                 localStorage.setItem(COLLAPSE_KEY, v ? 'full' : 'mini');
             } catch {
-                /* nggak bisa nyimpen, nggak apa-apa */
+                /* gagal menyimpan, tidak masalah */
             }
             return !v;
         });
@@ -530,7 +530,7 @@ function GlobalNotifier() {
     const toast = useToast();
     const { devices, status } = useData();
 
-    // Alamat tunnel berubah = alat nggak bakal nyambung sampai dikirimin alamat baru lewat SMS.
+    // Alamat tunnel berubah = alat tidak akan terhubung sampai dikirimi alamat baru melalui SMS.
     const addr = status?.tunnel ? `${status.tunnel.host}:${status.tunnel.port}` : '';
     const prevAddr = useRef<string | null>(null);
     useEffect(() => {
@@ -539,11 +539,11 @@ function GlobalNotifier() {
         prevAddr.current = addr;
         if (prev === null || prev === addr) return;
         if (!addr) {
-            // Tunnel sengaja dimatiin (TUNNEL=false, udah deploy) bukan masalah.
+            // Tunnel yang sengaja dimatikan (TUNNEL=false, sudah deploy) bukan masalah.
             if (status.tunnelEnabled)
                 toast({
                     title: 'Tunnel mati',
-                    body: 'Alat nggak bisa konek dari internet. Runner lagi nyoba bikin ulang tunnel.',
+                    body: 'Alat tidak dapat terhubung dari internet. Runner sedang mencoba membuat ulang tunnel.',
                     level: 'crit',
                 });
             return;
@@ -566,12 +566,12 @@ function GlobalNotifier() {
         ) {
             toast({
                 title: 'Unit online',
-                body: `${displayName(msg.device)} (${msg.device.imei}) konek lagi.`,
+                body: `${displayName(msg.device)} (${msg.device.imei}) terhubung kembali.`,
             });
         } else if (msg.type === 'event' && msg.event.kind === 'new') {
             toast({
                 title: 'Unit baru terdaftar',
-                body: `Alat GPS IMEI ${msg.event.imei} ditambahin ke database.`,
+                body: `Alat GPS IMEI ${msg.event.imei} ditambahkan ke database.`,
                 actions: [{ label: 'Buka di Live', to: '/live' }],
             });
             notify('Unit baru terdaftar', msg.event.imei);

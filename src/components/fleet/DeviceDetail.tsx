@@ -1,5 +1,5 @@
 'use client';
-// Detail satu kendaraan (dipakai Live & Armada): kondisi, CAN, riwayat kecepatan/aki, event,
+// Detail satu unit (dipakai Live & Armada): kondisi, CAN, riwayat kecepatan/aki, event,
 // kirim perintah GPRS, dan tabel semua IO terakhir.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -43,7 +43,7 @@ export const RANGES = [
     { min: '0', label: 'Semua' },
 ];
 
-// Riwayat titik satu alat (diambil sekali, titik baru dari stream ditambahin), dipotong ke rentang menit.
+// Riwayat titik satu alat (diambil sekali, titik baru dari stream ditambahkan), dipotong ke rentang menit.
 export function useDeviceHistory(imei: string | null, rangeMin: string): HistoryPoint[] {
     const [history, setHistory] = useState<HistoryPoint[]>([]);
     const detail = useQueryApiRequest<GlobalApiResponse<Device & { history: HistoryPoint[] }>>({
@@ -60,7 +60,7 @@ export function useDeviceHistory(imei: string | null, rangeMin: string): History
         if (msg.type !== 'point' || msg.imei !== imei) return;
         setHistory((h) => {
             const p = msg.point;
-            // Record tumpukan (dikirim telat setelah sinyal balik) disisipin sesuai waktunya.
+            // Record tumpukan (dikirim terlambat setelah sinyal kembali) disisipkan sesuai waktunya.
             if (h.length === 0 || p.t >= h[h.length - 1].t) return [...h.slice(-2999), p];
             const i = h.findIndex((x) => x.t > p.t);
             return [...h.slice(0, i), p, ...h.slice(i)].slice(-3000);
@@ -118,7 +118,7 @@ export default function DeviceDetail({
         try {
             await rename.mutateAsync({ name });
         } catch (e) {
-            toast({ title: 'Gagal nyimpen nama', body: errText(e), level: 'crit' });
+            toast({ title: 'Gagal menyimpan nama', body: errText(e), level: 'crit' });
         }
     };
 
@@ -172,8 +172,8 @@ export default function DeviceDetail({
                     <Tip
                         label={
                             d.online
-                                ? 'Koneksi TCP ke alat lagi kebuka, perintah bisa dikirim'
-                                : 'Normal: alat nutup koneksi kalau nggak ada data, dan buka lagi pas ada record baru'
+                                ? 'Koneksi TCP ke alat sedang terbuka, perintah dapat dikirim'
+                                : 'Normal: alat menutup koneksi bila tidak ada data, dan membukanya kembali saat ada record baru'
                         }
                     >
                         <span
@@ -211,7 +211,7 @@ export default function DeviceDetail({
                     label="Tegangan aki"
                     value={ext == null ? null : fmtNum(ext / 1000, 2)}
                     unit="V"
-                    sub={ext != null && ext < 1000 ? 'nggak ada power 12V' : 'external voltage'}
+                    sub={ext != null && ext < 1000 ? 'tidak ada power 12V' : 'external voltage'}
                 />
                 <Tile
                     label="Baterai internal"
@@ -260,7 +260,7 @@ export default function DeviceDetail({
             <Card className="gap-3">
                 <CardHeader>
                     <CardTitle>CAN unit</CardTitle>
-                    <CardDescription>tergantung mobil &amp; Program Number</CardDescription>
+                    <CardDescription>tergantung unit &amp; Program Number</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {anyCan ? (
@@ -305,8 +305,8 @@ export default function DeviceDetail({
                         </div>
                     ) : (
                         <Empty>
-                            Belum ada data CAN. Data ini baru muncul kalau FMC150 udah dipasang ke
-                            CAN unit dan Program Number-nya di-set.
+                            Belum ada data CAN. Data ini baru muncul bila FMC150 sudah dipasang ke
+                            CAN unit dan Program Number-nya sudah diatur.
                         </Empty>
                     )}
                 </CardContent>
@@ -358,7 +358,7 @@ export default function DeviceDetail({
                         <EventList
                             events={events}
                             devices={devices}
-                            empty="Belum ada event buat unit ini."
+                            empty="Belum ada event untuk unit ini."
                         />
                     </CardContent>
                 </Card>
@@ -369,7 +369,7 @@ export default function DeviceDetail({
                     <CardContent className="flex flex-col gap-3">
                         <Terminal
                             lines={terminal}
-                            empty="Perintah dikirim lewat koneksi GPRS (Codec 12). Alatnya harus lagi online."
+                            empty="Perintah dikirim lewat koneksi GPRS (Codec 12). Alat harus sedang online."
                         />
                         {can(P.deviceCommand) ? (
                             <CommandBox
@@ -377,21 +377,21 @@ export default function DeviceDetail({
                                 placeholder={
                                     d.online
                                         ? 'Perintah, mis. getstatus'
-                                        : 'Nunggu alat buka koneksi lagi…'
+                                        : 'Menunggu alat membuka koneksi kembali…'
                                 }
                                 onSend={(c) => void sendCmd(c)}
                                 disabled={!d.online}
                             />
                         ) : (
                             <Note tone="info">
-                                Akun ini nggak punya akses kirim perintah ke alat.
+                                Akun ini tidak memiliki akses untuk mengirim perintah ke alat.
                             </Note>
                         )}
                         {!d.online && (
                             <Note tone="info">
-                                Perintah cuma bisa dikirim pas koneksi terbuka. Alat buka koneksi
-                                lagi begitu ada record baru (gerakin kendaraannya, atau tunggu
-                                jadwal kirim berikutnya).
+                                Perintah hanya dapat dikirim saat koneksi terbuka. Alat membuka
+                                koneksi kembali begitu ada record baru (gerakkan unitnya, atau
+                                tunggu jadwal kirim berikutnya).
                             </Note>
                         )}
                     </CardContent>

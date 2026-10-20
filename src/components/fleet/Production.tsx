@@ -283,13 +283,13 @@ function Big({ label, value, sub }: { label: string; value: ReactNode; sub?: str
     );
 }
 
-// Kesegaran data: kapan data GPS terakhir & berapa telat datangnya (store and forward).
+// Kesegaran data: kapan data GPS terakhir & seberapa terlambat datangnya (store and forward).
 export function FreshnessPanel({ list }: { list: Freshness[] }) {
     const now = useNow(60000);
     return (
         <ChartCard
             title="Kesegaran data per unit"
-            hint="Telat = waktu diterima server − waktu GPS (12 jam terakhir)"
+            hint="Keterlambatan = waktu diterima server − waktu GPS (12 jam terakhir)"
         >
             {list.length === 0 ? (
                 <Empty>Belum ada unit.</Empty>
@@ -300,8 +300,8 @@ export function FreshnessPanel({ list }: { list: Freshness[] }) {
                             <TableHead>Unit</TableHead>
                             <TableHead>Data GPS terakhir</TableHead>
                             <TableHead>Terakhir diterima</TableHead>
-                            <TableHead className="text-right">Rata-rata telat</TableHead>
-                            <TableHead className="text-right">Record telat</TableHead>
+                            <TableHead className="text-right">Rata-rata keterlambatan</TableHead>
+                            <TableHead className="text-right">Record terlambat</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

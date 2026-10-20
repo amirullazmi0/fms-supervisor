@@ -1,5 +1,5 @@
 'use client';
-// Tablet MDT di kabin unit ini: bikin kode pairing 6 digit, lihat & cabut tablet yang terpasang.
+// Tablet MDT di kabin unit ini: buat kode pairing 6 digit, lihat & lepas tablet yang terpasang.
 import { useEffect, useState } from 'react';
 import { TabletSmartphone, X } from 'lucide-react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
@@ -41,7 +41,7 @@ export default function MdtPairing({ d }: { d: Device }) {
             setCode(r.data ?? null);
             setNow(Date.now());
         } catch (err) {
-            toast({ title: 'Gagal bikin kode', body: errText(err), level: 'crit' });
+            toast({ title: 'Gagal membuat kode', body: errText(err), level: 'crit' });
         }
     };
 

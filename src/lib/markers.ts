@@ -1,4 +1,4 @@
-// Penanda truk di peta Leaflet (gayanya di index.css: .tm*). Dipakai peta Live & Lacak truk.
+// Penanda unit di peta Leaflet (gayanya di index.css: .tm*). Dipakai peta Live & Lacak unit.
 import L from 'leaflet';
 import { statusOf } from './format';
 import type { Device } from '@/types/fleet';
@@ -9,7 +9,7 @@ export const escHtml = (s: string) =>
         (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
     );
 
-// Truk dilihat dari samping, siluet penuh: bak, kabin (+ kaca), 2 roda. Warna bak/kabin = warna status (currentColor).
+// Dump truck dilihat dari samping, siluet penuh: vessel, kabin (+ kaca), 2 roda. Warna vessel/kabin = warna status (currentColor).
 export const TRUCK_GLYPH =
     '<svg viewBox="0 0 24 24" aria-hidden="true">' +
     '<rect class="tk-body" x="1" y="5" width="13" height="11" rx="1.2" />' +
@@ -18,7 +18,7 @@ export const TRUCK_GLYPH =
     '<circle class="tk-wheel" cx="5.5" cy="17.3" r="2.2" /><circle class="tk-wheel" cx="18" cy="17.3" r="2.2" />' +
     '</svg>';
 
-// Ikon truk (tanpa lingkaran) + label. Panah kecil nunjukin arah kalau lagi jalan. Panah kecil nunjukin arah kalau lagi jalan.
+// Ikon unit (tanpa lingkaran) + label. Panah kecil menunjukkan arah saat unit berjalan.
 export function truckIcon(d: Device, label: string, selected: boolean): L.DivIcon {
     const st = statusOf(d);
     const dir =

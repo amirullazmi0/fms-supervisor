@@ -52,7 +52,7 @@ const useQueryApiRequest = <T,>({
         if (queryFetch.isError && config.errorNotification) {
             toast.error(
                 config.errorNotificationMessage ??
-                    apiErrorMessage(queryFetch.error, 'Gagal ngambil data'),
+                    apiErrorMessage(queryFetch.error, 'Gagal mengambil data'),
             );
         }
         if (queryFetch.isSuccess) {

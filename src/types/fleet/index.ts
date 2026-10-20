@@ -23,7 +23,7 @@ export interface IoDef {
     size: 1 | 2 | 4 | 8;
     unit?: string;
     scale?: number;
-    kind?: 'bool' | 'hex' | 'id'; // id = kode/nomor, ditampilin apa adanya tanpa pemisah ribuan
+    kind?: 'bool' | 'hex' | 'id'; // id = kode/nomor, ditampilkan apa adanya tanpa pemisah ribuan
     enum?: Record<number, string>;
     signed?: boolean;
 }
@@ -45,7 +45,7 @@ export interface HistoryPoint {
 export interface Device {
     imei: string;
     name: string | null;
-    // Info kendaraan (diisi dari dashboard)
+    // Info unit (diisi dari dashboard)
     plate: string | null;
     vehicle: string | null;
     payloadTon: number; // truck factor: ton per rit
@@ -97,7 +97,7 @@ export interface ServerStatus {
     lanIps: string[];
     // Alamat tunnel publik (ngrok / bore.pub), ini yang diisi di Domain/Port alat.
     tunnel: { host: string; port: number; provider: 'ngrok' | 'bore' | 'manual' } | null;
-    tunnelEnabled?: boolean; // TUNNEL=true di backend. false = udah deploy, alat konek langsung ke server
+    tunnelEnabled?: boolean; // TUNNEL=true di backend. false = sudah di-deploy, alat terhubung langsung ke server
     devicePort: number;
     db: { devices: number; records: number; events: number };
     connected: number;
@@ -115,11 +115,11 @@ export interface TrackPoint extends LatLng {
     speed: number;
     angle: number;
     ign: boolean | null;
-    fuel: number | null; // level BBM (satuan di DaySummary.fuelUnit), null kalau nggak ada sensor
+    fuel: number | null; // level BBM (satuan di DaySummary.fuelUnit), null bila tidak ada sensor
 }
 
 export interface FuelEvent {
-    type: 'refuel' | 'drop'; // drop = BBM turun pas truk diam (dugaan pencurian/bocor)
+    type: 'refuel' | 'drop'; // drop = BBM turun saat unit diam (dugaan pencurian/bocor)
     time: number;
     amount: number; // selalu positif, satuan fuelUnit
     before: number;
@@ -137,7 +137,7 @@ export interface TripSegment {
     avgSpeed: number;
     from: LatLng;
     to: LatLng;
-    idle: boolean; // berhenti dengan mesin nyala
+    idle: boolean; // berhenti dengan mesin menyala
     place: string | null; // nama jalan/daerah (titik berhenti, atau tujuan perjalanan)
     fuelUsed: number | null; // BBM terpakai selama perjalanan (satuan fuelUnit)
     fromIndex: number; // index di DaySummary.points
@@ -155,18 +155,18 @@ export interface DaySummary {
     avgSpeed: number;
     trips: number;
     stops: number;
-    engineMs: number; // lama mesin nyala (ignition ON)
+    engineMs: number; // lama mesin menyala (ignition ON)
     fuelUnit: 'L' | '%' | null;
-    fuelUsed: number | null; // total BBM terpakai hari itu (nggak termasuk isi ulang)
+    fuelUsed: number | null; // total BBM terpakai hari itu (tidak termasuk isi ulang)
     fuelEvents: FuelEvent[];
     segments: TripSegment[];
     points: TrackPoint[];
 }
 
-// Peran titik di sebuah rute. Titik sendiri nggak punya jenis: jadi loading/unloading ditentuin rute.
+// Peran titik di sebuah rute. Titik sendiri tidak punya jenis: front loading / dumping ditentukan rute.
 export type SiteType = 'loading' | 'unloading';
 
-// Master titik (geofence): tempat + radius. Satu titik bisa jadi loading di rute A dan unloading di rute B.
+// Master titik (geofence): lokasi + radius. Satu titik bisa menjadi front loading di rute A dan dumping di rute B.
 export interface Site {
     id: string;
     name: string;
@@ -174,7 +174,7 @@ export interface Site {
     lng: number;
     radius: number; // meter
     note: string | null;
-    imeis: string[]; // truk yang lagi bertugas (shift aktif) di rute yang lewat titik ini
+    imeis: string[]; // unit yang sedang bertugas (shift aktif) di rute yang melewati titik ini
     queueAlertTrucks?: number; // alert antrean: >= sekian unit antre...
     queueAlertMin?: number; // ...lebih dari sekian menit
     zones?: SiteZone[];
@@ -196,8 +196,8 @@ export interface SiteZone {
 // Jalur jalan antar dua titik (dari OSRM). paths[0] = jalur utama, sisanya alternatif.
 export interface RoadPath {
     distance: number; // meter
-    durationS: number; // estimasi mobil, detik
-    truckDurationS: number; // estimasi truk (mobil × truckFactor)
+    durationS: number; // estimasi kendaraan ringan, detik
+    truckDurationS: number; // estimasi unit (kendaraan ringan × truckFactor)
     coords: [number, number][]; // [lat, lng]
 }
 
@@ -208,7 +208,7 @@ export interface RoadRoute {
     fetchedAt: number;
 }
 
-// Jalur & estimasi dari ritase asli truk di rute itu (beberapa hari terakhir).
+// Jalur & estimasi dari ritase aktual unit di rute itu (beberapa hari terakhir).
 export interface RouteHistory {
     days: number;
     trips: number; // jumlah ritase selesai
@@ -227,14 +227,14 @@ export interface RouteHistory {
         durationMs: number;
         coords: [number, number][];
     } | null;
-    // Jalan yang biasa dilalui driver: pergi (loading → unloading) & pulang (unloading → loading).
+    // Jalan yang biasa dilalui operator: hauling (front loading → dumping) & return (dumping → front loading).
     paths?: { go: UsualPath | null; back: UsualPath | null } | null;
 }
 
 // Jejak GPS ritase yang paling mirip sama ritase lain di arah itu.
 export interface UsualPath {
     trips: number; // ritase selesai di arah ini
-    compared: number; // ritase terbaru yang dibandingin (maks 25)
+    compared: number; // ritase terbaru yang dibandingkan (maks 25)
     follow: number; // dari itu, berapa yang lewat jalan ini
     distance: number; // meter
     durationMs: number;
@@ -243,20 +243,20 @@ export interface UsualPath {
     coords: [number, number][];
 }
 
-// Siapa yang lagi jalan di satu rute (penugasan shift aktif yang masih berlaku).
+// Siapa yang sedang bertugas di satu rute (penugasan shift aktif yang masih berlaku).
 export interface OnDuty {
     shiftId: string;
     shiftName: string;
     driverId: string;
     driverName: string;
     imei: string;
-    // active = shift jalan; finishing = shift udah distop, ritase terakhir masih menuju unloading;
-    // done = shift udah beres (di recentDone, 12 jam terakhir).
+    // active = shift berjalan; finishing = shift sudah dihentikan, ritase terakhir masih menuju dumping;
+    // done = shift sudah selesai (di recentDone, 12 jam terakhir).
     phase?: 'active' | 'finishing' | 'done';
     closedAt?: number | null;
 }
 
-// Rute = 1 titik loading + 1 titik unloading. Driver & truk masuk ke rute lewat penugasan shift.
+// Rute = 1 titik front loading + 1 titik dumping. Operator & unit masuk ke rute lewat penugasan shift.
 export interface Route {
     id: string;
     name: string;
@@ -264,13 +264,13 @@ export interface Route {
     unloadingId: string;
     note: string | null;
     onDuty: OnDuty[];
-    recentDone?: OnDuty[]; // truk yang shift-nya udah beres di rute ini (12 jam terakhir)
-    imeis: string[]; // truk dari onDuty
+    recentDone?: OnDuty[]; // unit yang shift-nya sudah selesai di rute ini (12 jam terakhir)
+    imeis: string[]; // unit dari onDuty
     createdAt: number;
     updatedAt: number;
 }
 
-// Satu kali truk ada di dalam radius titik.
+// Satu kali unit berada di dalam radius titik.
 export interface SiteVisit {
     siteId: string;
     name: string;
@@ -279,17 +279,17 @@ export interface SiteVisit {
     dwellMs: number;
 }
 
-// Arah perjalanan di rute: go = berangkat (loading → unloading, bawa muatan), back = pulang (unloading → loading).
+// Arah perjalanan di rute: go = hauling (front loading → dumping, bermuatan), back = return (dumping → front loading).
 export type TripLeg = 'go' | 'back';
 
-// Satu perjalanan di rute, berangkat atau pulang.
-// `loading` = kunjungan di titik ASAL, `unloading` = kunjungan di titik TUJUAN (pulang: asal = titik unloading rute).
+// Satu perjalanan di rute, hauling atau return.
+// `loading` = kunjungan di titik ASAL, `unloading` = kunjungan di titik TUJUAN (return: asal = titik dumping rute).
 export interface RouteTrip {
     routeId: string;
     routeName: string;
     leg: TripLeg;
     loading: SiteVisit;
-    unloading: SiteVisit | null; // null = belum sampai (masih jalan / data berhenti)
+    unloading: SiteVisit | null; // null = belum tiba (masih berjalan / data terhenti)
     status: 'done' | 'ongoing' | 'unfinished';
     start: number; // keluar dari titik asal
     end: number; // tiba di titik tujuan (atau data terakhir)
@@ -309,7 +309,7 @@ export interface RouteReport {
     from: number;
     to: number;
     fuelUnit: 'L' | '%' | null;
-    routes: Route[]; // rute truk ini
+    routes: Route[]; // rute unit ini
     sites: Site[];
     visits: SiteVisit[];
     trips: RouteTrip[]; // ritase
@@ -332,7 +332,7 @@ export interface Driver {
     name: string;
     phone: string | null;
     employeeNo: string | null;
-    ibutton: string | null; // ID iButton (hex) kalau supir pakai kunci iButton FMC150
+    ibutton: string | null; // ID iButton (hex) bila operator memakai kunci iButton FMC150
     active: boolean;
     note: string | null;
     hasPin?: boolean; // bisa login di tablet MDT
@@ -376,7 +376,7 @@ export interface Shift {
     closedAt: number | null;
     closeReason: 'manual' | 'auto' | null;
     note: string | null;
-    overdue: boolean; // aktif tapi udah lewat jam selesai
+    overdue: boolean; // aktif tetapi sudah melewati jam selesai
     assignments: Assignment[];
     createdAt: number;
     updatedAt: number;
@@ -392,7 +392,7 @@ export interface TripRecord {
     driverId: string | null;
     driverName: string | null;
     imei: string;
-    truck: string | null; // plat / nama truk waktu itu
+    truck: string | null; // plat / nama unit saat itu
     routeId: string | null;
     routeName: string;
     leg: TripLeg;
@@ -418,7 +418,7 @@ export interface TripRecord {
 
 export type ReportGroup = 'route' | 'driver' | 'truck' | 'shift' | 'day' | 'hour';
 
-// trips/done/avg/min/max = jalan berangkat (loading → unloading). Jarak, berhenti, BBM total = dua arah.
+// trips/done/avg/min/max = hauling (front loading → dumping). Jarak, berhenti, BBM total = dua arah.
 export interface ReportRow {
     key: string;
     label: string;
@@ -428,7 +428,7 @@ export interface ReportRow {
     avgDurationMs: number;
     minDurationMs: number;
     maxDurationMs: number;
-    backDone: number; // jalan pulang (unloading → loading) yang selesai
+    backDone: number; // return (dumping → front loading) yang selesai
     backAvgMs: number;
     backMinMs: number;
     backMaxMs: number;
@@ -457,7 +457,7 @@ export interface Report {
 export type StreamMsg =
     | { type: 'hello'; time: number }
     | { type: 'sites' } // titik atau rute berubah
-    | { type: 'shifts' } // shift, penugasan, atau driver berubah
+    | { type: 'shifts' } // shift, penugasan, atau operator berubah
     | { type: 'trips' } // ritase tersimpan diperbarui
     | { type: 'notice'; level: 'info' | 'warn' | 'crit'; title: string; body: string; to?: string } // notifikasi umum (mis. shift lewat jam)
     | { type: 'device'; device: Device }
@@ -501,7 +501,7 @@ export interface UnitStatusLog {
     receivedAt: number;
 }
 
-// Jam: berjalan (belum lewat), sementara (ada truk yang datanya belum masuk sampai akhir jam), final.
+// Jam: berjalan (belum lewat), sementara (ada unit yang datanya belum masuk sampai akhir jam), final.
 export type HourStatus = 'berjalan' | 'sementara' | 'final';
 
 export interface PendingUnit {
