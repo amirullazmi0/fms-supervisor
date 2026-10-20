@@ -54,7 +54,7 @@ export default function VehicleSensors({ d, day }: Props) {
     const cargoTemp = n(72);
 
     return (
-        <section className="flex flex-col gap-3" aria-label="Sensor kendaraan">
+        <section className="flex flex-col gap-3" aria-label="Sensor unit">
             <SensorCard
                 title="BBM"
                 source="CAN / sensor tangki"
@@ -162,7 +162,7 @@ export default function VehicleSensors({ d, day }: Props) {
                 )}
             </SensorCard>
 
-            <SensorCard title="Supir" source="penugasan shift + iButton (1-Wire)">
+            <SensorCard title="Operator" source="penugasan shift + iButton (1-Wire)">
                 <Grid>
                     <Cell label="Bertugas" value={job?.driverName ?? 'Nganggur'} />
                     <Cell label="ID iButton" value={ibutton ?? '—'} mono />
@@ -213,7 +213,7 @@ function EngineCut({ d }: { d: Device }) {
     if (!can(P.deviceCommand)) blocked = 'Akun ini nggak punya akses kirim perintah ke alat.';
     else if (!d.online) blocked = 'Perintah cuma bisa dikirim pas koneksi alat terbuka.';
     else if (moving && !active)
-        blocked = `Truk lagi jalan ${speed} km/jam. Matiin mesin cuma boleh pas truk berhenti.`;
+        blocked = `Unit lagi jalan ${speed} km/jam. Matiin mesin cuma boleh pas unit berhenti.`;
 
     const send = async (on: boolean) => {
         setBusy(true);
@@ -254,7 +254,7 @@ function EngineCut({ d }: { d: Device }) {
             <ConfirmDialog
                 open={confirm != null}
                 onOpenChange={(o) => !o && setConfirm(null)}
-                title={confirm === 'on' ? 'Putus mesin truk ini?' : 'Lepas pemutus mesin?'}
+                title={confirm === 'on' ? 'Putus mesin unit ini?' : 'Lepas pemutus mesin?'}
                 description={
                     confirm === 'on'
                         ? 'Mesin bakal mati dan nggak bisa dinyalain sampai pemutus dilepas.'

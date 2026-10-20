@@ -68,7 +68,7 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                 <Empty>Gagal memuat ritase.</Empty>
             ) : report.routes.length === 0 ? (
                 <Empty>
-                    Truk ini belum dapat rute. Rute masuk lewat penugasan shift di menu{' '}
+                    Unit ini belum dapat rute. Rute masuk lewat penugasan shift di menu{' '}
                     <Link className="text-info hover:underline" href="/shifts">
                         Shift
                     </Link>
@@ -114,8 +114,8 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                     </div>
                     {report.trips.length === 0 ? (
                         <Empty>
-                            Belum ada ritase di tanggal ini. Ritase kehitung setelah truk keluar
-                            dari titik loading rute lalu masuk ke titik unloading rute yang sama.
+                            Belum ada ritase di tanggal ini. Ritase kehitung setelah unit keluar
+                            dari front loading rute lalu masuk ke titik dumping rute yang sama.
                         </Empty>
                     ) : (
                         <ol className="m-0 flex list-none flex-col gap-2 p-0">
@@ -141,7 +141,7 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                                                             r.leg === 'go' ? 'brand' : 'secondary'
                                                         }
                                                     >
-                                                        {r.leg === 'go' ? 'Berangkat' : 'Pulang'}
+                                                        {r.leg === 'go' ? 'Hauling' : 'Return'}
                                                     </Badge>
                                                     <span className="truncate text-[13px] font-medium">
                                                         {r.loading.name} →{' '}

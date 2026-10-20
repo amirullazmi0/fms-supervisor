@@ -44,16 +44,16 @@ export default function TripTable({ trips, show = [], empty = 'Belum ada ritase.
                         <TableHead className={cn(first === 'shift' && sticky)}>Shift</TableHead>
                     )}
                     {has('driver') && (
-                        <TableHead className={cn(first === 'driver' && sticky)}>Driver</TableHead>
+                        <TableHead className={cn(first === 'driver' && sticky)}>Operator</TableHead>
                     )}
                     {has('truck') && (
-                        <TableHead className={cn(first === 'truck' && sticky)}>Truk</TableHead>
+                        <TableHead className={cn(first === 'truck' && sticky)}>Unit</TableHead>
                     )}
                     {has('route') && (
                         <TableHead className={cn(first === 'route' && sticky)}>Rute</TableHead>
                     )}
                     <TableHead>Arah</TableHead>
-                    <TableHead className={cn(first === 'depart' && sticky)}>Berangkat</TableHead>
+                    <TableHead className={cn(first === 'depart' && sticky)}>Hauling</TableHead>
                     <TableHead>Sampai</TableHead>
                     <TableHead className="text-right">Durasi</TableHead>
                     <TableHead className="text-right">Jarak</TableHead>
@@ -97,7 +97,7 @@ export default function TripTable({ trips, show = [], empty = 'Belum ada ritase.
                         <TableCell>
                             <span className="flex items-center gap-2">
                                 <Badge variant={t.leg === 'go' ? 'brand' : 'secondary'}>
-                                    {t.leg === 'go' ? 'Berangkat' : 'Pulang'}
+                                    {t.leg === 'go' ? 'Hauling' : 'Return'}
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
                                     {t.loadingName} → {t.unloadingName}

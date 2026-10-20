@@ -71,7 +71,7 @@ export default function FleetView() {
     useEffect(() => {
         setStats(
             <>
-                <HeaderStat label="Truk" value={all.length} />
+                <HeaderStat label="Unit" value={all.length} />
                 <HeaderStat label="Online" value={online} />
             </>,
         );
@@ -83,10 +83,10 @@ export default function FleetView() {
         <div className="grid h-full min-h-0 md:grid-cols-[320px_1fr]">
             <aside className={cn('flex min-h-0 flex-col gap-3 border-r p-4', d && 'max-md:hidden')}>
                 <SearchInput
-                    placeholder="Cari plat, IMEI, driver…"
+                    placeholder="Cari plat, IMEI, operator…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Cari truk"
+                    aria-label="Cari unit"
                 />
                 <ul className="m-0 flex min-h-0 flex-1 list-none flex-col gap-2 overflow-y-auto p-0">
                     {list.map((x) => {
@@ -117,7 +117,7 @@ export default function FleetView() {
                             </li>
                         );
                     })}
-                    {list.length === 0 && <Empty>Nggak ada truk yang cocok.</Empty>}
+                    {list.length === 0 && <Empty>Nggak ada unit yang cocok.</Empty>}
                 </ul>
             </aside>
 
@@ -128,7 +128,7 @@ export default function FleetView() {
                 )}
             >
                 {!d ? (
-                    <Empty className="m-auto">Pilih truk di kiri buat lihat data mentahnya.</Empty>
+                    <Empty className="m-auto">Pilih unit di kiri buat lihat data mentahnya.</Empty>
                 ) : (
                     <>
                         <div className="flex flex-wrap items-center justify-between gap-3">

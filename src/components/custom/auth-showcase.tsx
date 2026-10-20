@@ -9,13 +9,13 @@ const SLIDES = [
         src: '/images/login-loader.png',
         alt: 'Loader mengisi dump truck di area tambang batubara, dilihat dari atas',
         title: 'Setiap ritase tercatat otomatis',
-        body: 'Loading sampai unloading dihitung dari GPS truk, lengkap dengan durasi, jarak, dan BBM.',
+        body: 'Loading sampai dumping dihitung dari GPS unit, lengkap dengan durasi, jarak, dan BBM.',
     },
     {
         src: '/images/login-site.png',
         alt: 'Area stockpile tambang dengan loader, conveyor, dan dump truck dari udara',
         title: 'Pantau armada tambang secara real-time',
-        body: 'Posisi truk, shift, dan driver dalam satu layar, langsung dari alat FMC150.',
+        body: 'Posisi unit, shift, dan operator dalam satu layar, langsung dari alat FMC150.',
     },
 ];
 

@@ -104,5 +104,5 @@ export default function FleetMap({
         line.current?.setStyle({ color: accent() });
     }, [trail]);
 
-    return <div ref={el} className={className} aria-label="Peta posisi kendaraan" />;
+    return <div ref={el} className={className} aria-label="Peta posisi unit" />;
 }

@@ -10,7 +10,7 @@ export const ROLE_COLOR: Record<SiteType | 'none', string> = {
     unloading: '#e07b00',
     none: '#2f6fe4',
 };
-export const ROLE_LABEL: Record<SiteType, string> = { loading: 'Loading', unloading: 'Unloading' };
+export const ROLE_LABEL: Record<SiteType, string> = { loading: 'Loading', unloading: 'Dumping' };
 
 export const escHtml = (s: string) =>
     s.replace(

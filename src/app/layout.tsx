@@ -8,7 +8,7 @@ import { ToastProvider } from '@/components/fleet/Toasts';
 
 export const metadata: Metadata = {
     title: 'FMS',
-    description: 'Pelacakan truk FMC150, shift, dan laporan ritase',
+    description: 'Pelacakan unit FMC150, shift, dan laporan ritase',
     icons: { icon: '/favicon.svg' },
 };
 

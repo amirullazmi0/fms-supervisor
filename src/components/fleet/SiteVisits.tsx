@@ -68,7 +68,7 @@ export default function SiteVisits({ query }: { query: string }) {
                 >
                     <ToggleGroupItem value="all">Semua</ToggleGroupItem>
                     <ToggleGroupItem value="loading">Loading</ToggleGroupItem>
-                    <ToggleGroupItem value="unloading">Unloading</ToggleGroupItem>
+                    <ToggleGroupItem value="unloading">Dumping</ToggleGroupItem>
                 </ToggleGroup>
             </div>
             {stats && (
@@ -81,13 +81,13 @@ export default function SiteVisits({ query }: { query: string }) {
                         }
                         sub={
                             stats.loading.inside
-                                ? `${stats.loading.inside} truk lagi di dalam`
+                                ? `${stats.loading.inside} unit lagi di dalam`
                                 : undefined
                         }
                     />
-                    <Avg label="Rata-rata di unloading" s={stats.unloading} />
+                    <Avg label="Rata-rata di dumping" s={stats.unloading} />
                     <Stat
-                        label="Terlama di unloading"
+                        label="Terlama di dumping"
                         value={
                             stats.unloading.maxDwellMs
                                 ? fmtDuration(stats.unloading.maxDwellMs)
@@ -95,7 +95,7 @@ export default function SiteVisits({ query }: { query: string }) {
                         }
                         sub={
                             stats.unloading.inside
-                                ? `${stats.unloading.inside} truk lagi di dalam`
+                                ? `${stats.unloading.inside} unit lagi di dalam`
                                 : undefined
                         }
                     />
@@ -105,15 +105,15 @@ export default function SiteVisits({ query }: { query: string }) {
                 <Empty className="px-4 pb-4">Memuat…</Empty>
             ) : rows.length === 0 ? (
                 <Empty className="px-4 pb-4">
-                    Belum ada truk yang mampir di titik loading / unloading di periode ini.
+                    Belum ada unit yang mampir di front loading / dumping di periode ini.
                 </Empty>
             ) : (
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Tanggal</TableHead>
-                            <TableHead>Truk</TableHead>
-                            <TableHead>Driver</TableHead>
+                            <TableHead>Unit</TableHead>
+                            <TableHead>Operator</TableHead>
                             <TableHead>Shift</TableHead>
                             <TableHead>Rute</TableHead>
                             <TableHead>Titik</TableHead>
@@ -138,7 +138,7 @@ export default function SiteVisits({ query }: { query: string }) {
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
                                     <Badge variant={v.role === 'loading' ? 'success' : 'warning'}>
-                                        {v.role === 'loading' ? 'Loading' : 'Unloading'}
+                                        {v.role === 'loading' ? 'Loading' : 'Dumping'}
                                     </Badge>{' '}
                                     {v.siteName}
                                 </TableCell>

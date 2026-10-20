@@ -38,12 +38,12 @@ export default function RoadInfo(props: Props) {
                 <>
                     <UsualInfo
                         path={props.history.paths?.go}
-                        title="Jalan pergi (loading → unloading)"
+                        title="Jalan pergi (loading → dumping)"
                         line="actual"
                     />
                     <UsualInfo
                         path={props.history.paths?.back}
-                        title="Jalan pulang (unloading → loading)"
+                        title="Jalan pulang (dumping → loading)"
                         line="back"
                     />
                 </>
@@ -101,17 +101,17 @@ function HistoryInfo({ history: h }: { history: RouteHistory | null }) {
     if (!h) return null;
     if (!h.trips) {
         return (
-            <Box line="actual" title="Jalur asli truk">
+            <Box line="actual" title="Jalur asli unit">
                 <Empty>
                     Belum ada ritase selesai di rute ini dalam {h.days} hari terakhir. Garis jalan
-                    asli muncul setelah truk pertama kali jalan dari loading ke unloading.
+                    asli muncul setelah unit pertama kali jalan dari loading ke dumping.
                 </Empty>
             </Box>
         );
     }
     const unit = h.fuelUnit;
     return (
-        <Box line="actual" title={`Jalur asli truk · ${h.trips} ritase (${h.days} hari)`}>
+        <Box line="actual" title={`Jalur asli unit · ${h.trips} ritase (${h.days} hari)`}>
             <Nums
                 items={[
                     ['Rata-rata', fmtDuration(h.avgDurationMs)],
@@ -150,7 +150,7 @@ function UsualInfo({
         return (
             <Box line={line} title={title}>
                 <Empty className="text-xs">
-                    Belum ada ritase selesai di arah ini. Garisnya muncul setelah truk pertama kali
+                    Belum ada ritase selesai di arah ini. Garisnya muncul setelah unit pertama kali
                     lewat.
                 </Empty>
             </Box>
@@ -176,12 +176,12 @@ function BackInfo({ road }: { road?: RoadState }) {
     const p = road?.data?.paths[0];
     if (!road || road.loading || !p) return null;
     return (
-        <Box line="back" title="Jalur pulang (unloading → loading)">
+        <Box line="back" title="Jalur pulang (dumping → loading)">
             <Nums
                 items={[
                     ['Jarak', km(p.distance)],
-                    ['Truk ±', fmtDuration(p.truckDurationS * 1000)],
-                    ['Mobil', fmtDuration(p.durationS * 1000)],
+                    ['Unit ±', fmtDuration(p.truckDurationS * 1000)],
+                    ['Unit', fmtDuration(p.durationS * 1000)],
                 ]}
             />
         </Box>
@@ -202,12 +202,12 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
                 <Nums
                     items={[
                         ['Jarak ±', km(est)],
-                        ['Waktu truk ±', fmtDuration((est / 1000 / TRUCK_KMH) * 3600e3)],
+                        ['Waktu unit ±', fmtDuration((est / 1000 / TRUCK_KMH) * 3600e3)],
                     ]}
                 />
                 <Empty className="text-xs">
                     Jalur jalan nggak bisa diambil{road.error ? ` (${road.error})` : ''}. Ini
-                    perkiraan dari jarak lurus {km(straight)} × {DETOUR} dengan kecepatan truk{' '}
+                    perkiraan dari jarak lurus {km(straight)} × {DETOUR} dengan kecepatan unit{' '}
                     {TRUCK_KMH} km/jam.
                 </Empty>
             </Box>
@@ -216,7 +216,7 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
 
     const { paths, truckFactor } = road.data;
     return (
-        <Box line="planned" title="Jalur pergi (loading → unloading)">
+        <Box line="planned" title="Jalur pergi (loading → dumping)">
             <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
                 {paths.map((p, i) => (
                     <li key={i}>
@@ -237,8 +237,8 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
                             <Nums
                                 items={[
                                     ['Jarak', km(p.distance)],
-                                    ['Truk ±', fmtDuration(p.truckDurationS * 1000)],
-                                    ['Mobil', fmtDuration(p.durationS * 1000)],
+                                    ['Unit ±', fmtDuration(p.truckDurationS * 1000)],
+                                    ['Unit', fmtDuration(p.durationS * 1000)],
                                 ]}
                             />
                         </button>

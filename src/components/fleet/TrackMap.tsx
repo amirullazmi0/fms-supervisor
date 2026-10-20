@@ -44,7 +44,10 @@ function truckPopup(d: Device, job: Duty | undefined): string {
     ];
     rows.push(
         job
-            ? ['Supir', `${esc(job.driverName)} <span class="muted">(${esc(job.shiftName)})</span>`]
+            ? [
+                  'Operator',
+                  `${esc(job.driverName)} <span class="muted">(${esc(job.shiftName)})</span>`,
+              ]
             : ['Tugas', 'Nganggur'],
     );
     if (job) rows.push(['Rute', esc(job.routeName)]);
@@ -388,5 +391,5 @@ export default function TrackMap({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [follow, lat, lng]);
 
-    return <div ref={el} className={className} aria-label="Peta pelacakan truk" />;
+    return <div ref={el} className={className} aria-label="Peta pelacakan unit" />;
 }

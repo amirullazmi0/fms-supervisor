@@ -53,7 +53,7 @@ const GROUP_LABEL: Record<IoGroup, string> = {
     power: 'Daya',
     io: 'Input / output',
     driving: 'Mengemudi',
-    can: 'CAN / kendaraan',
+    can: 'CAN / unit',
 };
 const GROUP_ORDER: IoGroup[] = ['status', 'driving', 'can', 'power', 'io', 'gnss'];
 const time = (ms: number) =>
@@ -165,7 +165,7 @@ export default function RawRecords({ imei, date }: { imei: string; date: string 
             {q.isLoading ? (
                 <Empty>Memuat…</Empty>
             ) : rows.length === 0 ? (
-                <Empty>Belum ada data dari truk ini di tanggal ini.</Empty>
+                <Empty>Belum ada data dari unit ini di tanggal ini.</Empty>
             ) : (
                 <div className={cn('rounded-lg border', q.isFetching && 'opacity-70')}>
                     <Table>
