@@ -88,13 +88,13 @@ export default function LiveView() {
 
                 <Card className="gap-3" aria-labelledby="devTitle">
                     <CardHeader>
-                        <CardTitle id="devTitle">Kendaraan</CardTitle>
-                        <CardDescription>{list.length} kendaraan</CardDescription>
+                        <CardTitle id="devTitle">Unit</CardTitle>
+                        <CardDescription>{list.length} unit</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2">
                         <SearchInput
-                            placeholder="Cari kendaraan atau IMEI"
-                            aria-label="Cari kendaraan"
+                            placeholder="Cari unit atau IMEI"
+                            aria-label="Cari unit"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -102,9 +102,7 @@ export default function LiveView() {
                             {filtered.length === 0 && (
                                 <li>
                                     <Empty>
-                                        {list.length
-                                            ? 'Nggak ada yang cocok.'
-                                            : 'Belum ada kendaraan.'}
+                                        {list.length ? 'Nggak ada yang cocok.' : 'Belum ada unit.'}
                                     </Empty>
                                 </li>
                             )}
@@ -179,14 +177,14 @@ export default function LiveView() {
                         aria-pressed={follow}
                         onClick={() => setFollow(!follow)}
                     >
-                        <LocateFixed /> Ikuti kendaraan
+                        <LocateFixed /> Ikuti unit
                     </Button>
                 </div>
 
                 {ready && list.length === 0 && (
                     <Card className="px-5">
                         <h2 className="m-0 text-lg font-semibold">
-                            Belum ada kendaraan yang kirim data
+                            Belum ada unit yang kirim data
                         </h2>
                         <p className="m-0 text-sm text-muted-foreground">
                             Setting FMC150 biar ngirim ke server ini lewat SMS (dari HP Android,
@@ -314,7 +312,7 @@ function ServerCard() {
                 <KV
                     rows={[
                         ['Port dashboard', <span className="font-mono">{s.port}</span>],
-                        ['Kendaraan tersambung', <span className="font-mono">{s.connected}</span>],
+                        ['Unit tersambung', <span className="font-mono">{s.connected}</span>],
                     ]}
                 />
             </CardContent>

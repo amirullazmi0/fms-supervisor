@@ -1,6 +1,7 @@
 'use client';
 // Lacak truk: daftar armada (dengan progres rute loading → unloading) + peta penuh
 // dengan kartu detail mengambang (info, driver, perjalanan, ritase, sensor) dan putar ulang rute.
+import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ChevronDown,
@@ -68,7 +69,7 @@ export default function TrackView() {
     const { setStats } = useLayout();
     useTick(1000);
 
-    const [selected, setSelected] = useState<string | null>(null);
+    const [selected, setSelected] = useQueryState('unit'); // ?unit=<imei>: bisa dibuka langsung dari Beranda
     const [date, setDate] = useState(() => dateKey());
     const [day, setDay] = useState<DaySummary | null>(null);
     const [loading, setLoading] = useState(false);
@@ -238,7 +239,7 @@ export default function TrackView() {
     useEffect(() => {
         setStats(
             <>
-                <HeaderStat label="Truk" value={list.length} />
+                <HeaderStat label="Unit" value={list.length} />
                 <HeaderStat label="Bertugas" value={nDuty} />
                 <HeaderStat label="Jalan" value={counts.moving} />
                 <HeaderStat label="Berhenti" value={counts.idle + counts.parked} />
@@ -272,13 +273,13 @@ export default function TrackView() {
             {/* Daftar armada */}
             <aside
                 className="order-3 flex flex-col gap-3 border-t bg-card p-4 lg:order-none lg:overflow-y-auto lg:border-r lg:border-t-0"
-                aria-label="Daftar truk"
+                aria-label="Daftar unit"
             >
                 <SearchInput
-                    placeholder="Cari plat, driver, rute…"
+                    placeholder="Cari plat, operator, rute…"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    aria-label="Cari truk"
+                    aria-label="Cari unit"
                 />
                 <Tabs value={tab} onValueChange={(v) => setTab(v as FleetTab)}>
                     <TabsList className="w-full">
@@ -298,7 +299,7 @@ export default function TrackView() {
 
                 {ready && list.length === 0 && (
                     <Empty>
-                        Belum ada kendaraan yang terdaftar. Buat contoh, jalanin{' '}
+                        Belum ada unit yang terdaftar. Buat contoh, jalanin{' '}
                         <code className="font-mono">go run ./cmd/simulator</code>. Alamat buat alat
                         asli:{' '}
                         <span className="font-mono">
@@ -310,7 +311,7 @@ export default function TrackView() {
                         </span>
                     </Empty>
                 )}
-                {list.length > 0 && shown.length === 0 && <Empty>Nggak ada truk yang cocok.</Empty>}
+                {list.length > 0 && shown.length === 0 && <Empty>Nggak ada unit yang cocok.</Empty>}
 
                 <ul className="m-0 flex list-none gap-2.5 overflow-x-auto p-0 pb-1 max-lg:snap-x max-lg:snap-mandatory lg:flex-col lg:overflow-visible lg:pb-0">
                     {shown.map((x) => (
@@ -362,7 +363,7 @@ export default function TrackView() {
                         <ToggleGroupItem value="map">Peta</ToggleGroupItem>
                         <ToggleGroupItem value="sat">Satelit</ToggleGroupItem>
                     </ToggleGroup>
-                    <Tip label="Titik loading/unloading & jalur rute">
+                    <Tip label="Front loading/dumping & jalur rute">
                         <Button
                             variant="outline"
                             className={cn('shadow-lg', showRoutes && 'border-ring')}
@@ -372,7 +373,7 @@ export default function TrackView() {
                             <Layers /> <span className="max-sm:hidden">Lapisan</span>
                         </Button>
                     </Tip>
-                    <Tip label="Peta ngikutin truk yang dipilih">
+                    <Tip label="Peta ngikutin unit yang dipilih">
                         <Button
                             variant="outline"
                             className={cn('shadow-lg', follow && 'border-ring')}
@@ -502,7 +503,7 @@ function FleetCard({
                 <b className="truncate text-sm">{truckLabel(d)}</b>
                 {job && (
                     <span className="ml-auto min-w-0 truncate rounded-md border bg-card px-2 py-0.5 text-[11.5px] font-semibold">
-                        <span className="font-normal text-muted-foreground">Driver:</span>{' '}
+                        <span className="font-normal text-muted-foreground">Operator:</span>{' '}
                         {job.driverName}
                     </span>
                 )}
@@ -574,7 +575,7 @@ function DetailCard(props: DetailProps) {
 
     return (
         <section
-            aria-label="Detail truk"
+            aria-label="Detail unit"
             className={cn(
                 'order-2 m-2 flex flex-col overflow-hidden rounded-2xl border bg-card shadow-xs',
                 'lg:absolute lg:left-[calc(360px+1.5rem)] lg:top-6 lg:z-[1000] lg:m-0 lg:w-[min(400px,calc(100%-360px-3rem))] lg:shadow-xl',
@@ -583,7 +584,7 @@ function DetailCard(props: DetailProps) {
         >
             <header className="flex items-center gap-2 px-4 py-3">
                 <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px]">
-                    <span className="text-muted-foreground">Truk</span>
+                    <span className="text-muted-foreground">Unit</span>
                     <b className="truncate text-[15px]">{truckLabel(d)}</b>
                     <Tip label="Salin IMEI">
                         <Button
@@ -612,8 +613,8 @@ function DetailCard(props: DetailProps) {
             {!collapsed && (
                 <Tabs defaultValue="info" className="min-h-0 flex-1 gap-0">
                     <TabsList className="mx-4 mb-3 w-[calc(100%-2rem)] justify-start overflow-x-auto scrollbar-none">
-                        <TabsTrigger value="info">Info truk</TabsTrigger>
-                        <TabsTrigger value="driver">Driver</TabsTrigger>
+                        <TabsTrigger value="info">Info unit</TabsTrigger>
+                        <TabsTrigger value="driver">Operator</TabsTrigger>
                         <TabsTrigger value="trip">Perjalanan</TabsTrigger>
                         <TabsTrigger value="ritase">Ritase</TabsTrigger>
                         <TabsTrigger value="sensor">Sensor</TabsTrigger>
@@ -710,9 +711,9 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
                               ['Shift', job.shiftName],
                               ['Rute', job.routeName],
                               ['Loading', from?.name ?? '—'],
-                              ['Unloading', to?.name ?? '—'],
+                              ['Dumping', to?.name ?? '—'],
                               ...(p != null
-                                  ? [['Progres', `${Math.round(p * 100)}% menuju unloading`]]
+                                  ? [['Progres', `${Math.round(p * 100)}% menuju dumping`]]
                                   : []),
                               ...(job.phase === 'finishing'
                                   ? [
@@ -727,12 +728,12 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
                               string,
                               React.ReactNode,
                           ][])),
-                    ['Jenis kendaraan', d.vehicle || '—'],
+                    ['Jenis unit', d.vehicle || '—'],
                     ['IMEI', <span className="font-mono text-xs">{d.imei}</span>],
                 ]}
             />
 
-            <div className="grid grid-cols-3 gap-2" aria-label="Kondisi kendaraan">
+            <div className="grid grid-cols-3 gap-2" aria-label="Kondisi unit">
                 <Mini
                     label="Mesin"
                     value={d.io[239] == null ? '—' : d.io[239] ? 'Nyala' : 'Mati'}
@@ -745,7 +746,7 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
             </div>
 
             <Button variant="outline" size="sm" className="self-start" onClick={onEdit}>
-                <Pencil /> Ubah info truk
+                <Pencil /> Ubah info unit
             </Button>
         </div>
     );
@@ -765,8 +766,8 @@ function DriverTab({ job }: { job: Duty | undefined }) {
     if (!job)
         return (
             <Empty>
-                Truk ini lagi nganggur. Driver muncul di sini kalau truknya ditugaskan di shift yang
-                lagi jalan (menu Shift).
+                Unit ini lagi nganggur. Operator muncul di sini kalau truknya ditugaskan di shift
+                yang lagi jalan (menu Shift).
             </Empty>
         );
     const dr = drivers.find((x) => x.id === job.driverId);

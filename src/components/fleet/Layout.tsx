@@ -18,6 +18,9 @@ import {
     CalendarClock,
     ChartColumn,
     Container,
+    Gauge,
+    HardHat,
+    LayoutDashboard,
     LogOut,
     MapPin,
     Menu,
@@ -72,14 +75,85 @@ const LayoutCtx = createContext<LayoutContext>({ setStats: () => {} });
 export const useLayout = () => useContext(LayoutCtx);
 
 // Menu cuma nampilin halaman yang boleh dibuka role user (permission).
-const NAV: { to: string; label: string; icon: LucideIcon; end?: boolean; need: Permission[] }[] = [
-    { to: '/', label: 'Live (GPRS)', icon: Radio, end: true, need: [P.deviceRead] },
-    { to: '/track', label: 'Lacak truk', icon: Truck, need: [P.deviceRead] },
-    { to: '/fleet', label: 'Armada', icon: Container, need: [P.deviceRead] },
-    { to: '/shifts', label: 'Shift', icon: CalendarClock, need: [P.shiftRead] },
-    { to: '/reports', label: 'Laporan', icon: ChartColumn, need: [P.reportRead] },
-    { to: '/sites', label: 'Titik & rute', icon: MapPin, need: [P.siteRead, P.routeRead] },
+// Dikelompokkan sesuai kerja dispatcher. `bottom` = muncul di bar bawah HP (maks 4).
+type NavGroup = 'Operasional' | 'Produksi' | 'Penugasan' | 'Master data';
+const NAV: {
+    to: string;
+    label: string;
+    short?: string;
+    icon: LucideIcon;
+    end?: boolean;
+    need: Permission[];
+    group: NavGroup;
+    bottom?: boolean;
+}[] = [
+    {
+        to: '/',
+        label: 'Beranda',
+        icon: LayoutDashboard,
+        end: true,
+        need: [P.deviceRead, P.shiftRead, P.reportRead],
+        group: 'Operasional',
+        bottom: true,
+    },
+    {
+        to: '/track',
+        label: 'Lacak unit',
+        short: 'Lacak',
+        icon: Truck,
+        need: [P.deviceRead],
+        group: 'Operasional',
+        bottom: true,
+    },
+    { to: '/live', label: 'Live (GPRS)', icon: Radio, need: [P.deviceRead], group: 'Operasional' },
+    {
+        to: '/production',
+        label: 'Produksi per jam',
+        short: 'Produksi',
+        icon: Gauge,
+        need: [P.reportRead],
+        group: 'Produksi',
+        bottom: true,
+    },
+    {
+        to: '/reports',
+        label: 'Laporan ritase',
+        icon: ChartColumn,
+        need: [P.reportRead],
+        group: 'Produksi',
+    },
+    {
+        to: '/shifts',
+        label: 'Shift & penugasan',
+        short: 'Shift',
+        icon: CalendarClock,
+        need: [P.shiftRead],
+        group: 'Penugasan',
+        bottom: true,
+    },
+    {
+        to: '/operators',
+        label: 'Operator',
+        icon: HardHat,
+        need: [P.driverRead],
+        group: 'Penugasan',
+    },
+    {
+        to: '/fleet',
+        label: 'Armada & MDT',
+        icon: Container,
+        need: [P.deviceRead],
+        group: 'Master data',
+    },
+    {
+        to: '/sites',
+        label: 'Front, dumping & rute',
+        icon: MapPin,
+        need: [P.siteRead, P.routeRead],
+        group: 'Master data',
+    },
 ];
+const GROUPS: NavGroup[] = ['Operasional', 'Produksi', 'Penugasan', 'Master data'];
 
 const THEMES: { mode: ThemeMode; label: string; icon: LucideIcon }[] = [
     { mode: 'system', label: 'Ikut sistem', icon: Monitor },
@@ -175,8 +249,42 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <main className="relative min-h-0 flex-1 overflow-auto">
                     <LayoutCtx.Provider value={{ setStats }}>{children}</LayoutCtx.Provider>
                 </main>
+                <BottomBar pathname={pathname} onMore={() => setOpen(true)} />
             </div>
         </div>
+    );
+}
+
+// HP: 4 menu utama di bawah (jempol), sisanya lewat "Lainnya" (laci menu).
+function BottomBar({ pathname, onMore }: { pathname: string; onMore: () => void }) {
+    const user = useAuthStore((s) => s.user);
+    const can = (p: Permission) =>
+        !user?.permissions || user.is_administrator || user.permissions.includes(p);
+    const items = NAV.filter((n) => n.bottom && n.need.some(can)).slice(0, 4);
+    const cell =
+        'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium';
+    return (
+        <nav
+            className="flex shrink-0 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+            aria-label="Menu utama"
+        >
+            {items.map((n) => {
+                const active = n.end ? pathname === n.to : pathname.startsWith(n.to);
+                return (
+                    <Link
+                        key={n.to}
+                        href={n.to}
+                        className={cn(cell, active ? 'text-foreground' : 'text-muted-foreground')}
+                    >
+                        <n.icon className={cn('size-5', active && 'text-brand')} />
+                        {n.short ?? n.label}
+                    </Link>
+                );
+            })}
+            <button type="button" onClick={onMore} className={cn(cell, 'text-muted-foreground')}>
+                <Menu className="size-5" /> Lainnya
+            </button>
+        </nav>
     );
 }
 
@@ -318,10 +426,23 @@ function SidebarBody({ mini, onToggle }: { mini: boolean; onToggle?: () => void 
                 </button>
             )}
 
-            <nav className="flex flex-col gap-1" aria-label="Halaman">
-                {NAV.filter((n) => n.need.some(can)).map((n) =>
-                    navItem(n.to, n.label, n.icon, n.end),
-                )}
+            <nav className="flex min-h-0 flex-col gap-3 overflow-y-auto" aria-label="Halaman">
+                {GROUPS.map((g) => {
+                    const items = NAV.filter((n) => n.group === g && n.need.some(can));
+                    if (!items.length) return null;
+                    return (
+                        <div key={g} className="flex flex-col gap-1">
+                            {mini ? (
+                                <i className="mx-3 border-t border-sidebar-border" />
+                            ) : (
+                                <span className="px-3 text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+                                    {g}
+                                </span>
+                            )}
+                            {items.map((n) => navItem(n.to, n.label, n.icon, n.end))}
+                        </div>
+                    );
+                })}
             </nav>
 
             <div className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-3">
@@ -444,16 +565,16 @@ function GlobalNotifier() {
             !devices[msg.device.imei].online
         ) {
             toast({
-                title: 'Kendaraan online',
+                title: 'Unit online',
                 body: `${displayName(msg.device)} (${msg.device.imei}) konek lagi.`,
             });
         } else if (msg.type === 'event' && msg.event.kind === 'new') {
             toast({
-                title: 'Kendaraan baru terdaftar',
+                title: 'Unit baru terdaftar',
                 body: `Alat GPS IMEI ${msg.event.imei} ditambahin ke database.`,
-                actions: [{ label: 'Buka di Live', to: '/' }],
+                actions: [{ label: 'Buka di Live', to: '/live' }],
             });
-            notify('Kendaraan baru terdaftar', msg.event.imei);
+            notify('Unit baru terdaftar', msg.event.imei);
         } else if (msg.type === 'notice') {
             toast({
                 title: msg.title,
