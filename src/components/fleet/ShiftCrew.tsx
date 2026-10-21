@@ -72,7 +72,7 @@ function busyElsewhere(shift: Shift, others: Shift[], routes: Route[]) {
 type Busy = ReturnType<typeof busyElsewhere>;
 
 export default function ShiftCrew({ shift, route, others, trips, editable, onChanged }: Props) {
-    const { drivers, devices, routes } = useData();
+    const { drivers, devices, routes, sites } = useData();
     const toast = useToast();
     const lastQuery = useQueryApiRequest<GlobalApiResponse<Last>>({
         key: 'drivers-last',
@@ -105,6 +105,11 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
     );
     const freeTrucks = trucks.filter((t) => !usedTrucks.has(t.imei) && !busy.trucks.has(t.imei));
     const unit = trips.find((t) => t.fuelUnit)?.fuelUnit ?? null;
+    // Stockpile / jetty rute: lebih dari satu = tiap unit di-set tujuannya.
+    const jetties = (route?.unloadingIds ?? (route ? [route.unloadingId] : []))
+        .map((id) => sites.find((s) => s.id === id))
+        .filter((s) => s != null)
+        .map((s) => ({ id: s.id, name: s.name }));
 
     if (!route)
         return (
@@ -157,6 +162,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                             open={expanded === a.id}
                             onToggle={() => setExpanded(expanded === a.id ? null : a.id)}
                             freeTrucks={freeTrucks}
+                            jetties={jetties}
                             status={shift.status}
                             shiftStart={shift.startedAt}
                             onChanged={onChanged}
@@ -573,6 +579,7 @@ interface ItemProps {
     open: boolean;
     onToggle: () => void;
     freeTrucks: Device[];
+    jetties: { id: string; name: string }[]; // stockpile / jetty rute, utama dulu
     status: Shift['status'];
     shiftStart: number | null;
     onChanged: () => void;
@@ -588,6 +595,7 @@ function AssignmentItem({
     open,
     onToggle,
     freeTrucks,
+    jetties,
     status,
     shiftStart,
     onChanged,
@@ -610,7 +618,7 @@ function AssignmentItem({
     const ending = status === 'active' && trips.length > 0;
     const update = useMutationApiRequest<
         GlobalApiResponse<Assignment>,
-        { driverId: string; imei: string; note: string | null }
+        { driverId: string; imei: string; unloadingId: string | null; note: string | null }
     >({
         key: 'assignments-update',
         params: { id: a.id },
@@ -624,13 +632,35 @@ function AssignmentItem({
 
     const changeTruck = async (imei: string) => {
         try {
-            await update.mutateAsync({ driverId: a.driverId, imei, note: a.note });
+            await update.mutateAsync({
+                driverId: a.driverId,
+                imei,
+                unloadingId: a.unloadingId,
+                note: a.note,
+            });
             toast({
                 title: 'Unit diganti',
                 body:
                     status === 'active'
                         ? 'Ritase sebelumnya tetap tercatat pada unit lama.'
                         : undefined,
+            });
+            onChanged();
+        } catch (err) {
+            toast({ title: 'Gagal', body: errText(err), level: 'crit' });
+        }
+    };
+    const jetty = jetties.find((j) => j.id === a.unloadingId) ?? jetties[0];
+    const changeJetty = async (unloadingId: string) => {
+        try {
+            await update.mutateAsync({
+                driverId: a.driverId,
+                imei: a.imei,
+                unloadingId,
+                note: a.note,
+            });
+            toast({
+                title: `Tujuan ${truck ? truckLabel(truck) : a.imei}: ${jetties.find((j) => j.id === unloadingId)?.name ?? ''}`,
             });
             onChanged();
         } catch (err) {
@@ -678,6 +708,9 @@ function AssignmentItem({
                         <span className="truncate font-mono text-xs text-muted-foreground">
                             {truck ? truckLabel(truck) : a.imei}
                             {when && <span className="font-sans"> · {when}</span>}
+                            {jetties.length > 1 && jetty && (
+                                <span className="font-sans"> · ke {jetty.name}</span>
+                            )}
                         </span>
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-0.5">
@@ -703,6 +736,19 @@ function AssignmentItem({
                 </button>
                 {editable && !ended && (
                     <div className="flex shrink-0 items-center gap-1 max-sm:w-full max-sm:px-4 max-sm:pb-3">
+                        {jetties.length > 1 && (
+                            <Combobox
+                                size="sm"
+                                className="w-40 max-sm:flex-1"
+                                value={jetty?.id ?? ''}
+                                onChange={(v) => void changeJetty(v)}
+                                options={jetties.map((j) => ({ value: j.id, label: j.name }))}
+                                placeholder="Stockpile / jetty…"
+                                searchPlaceholder="Cari stockpile / jetty…"
+                                empty="Tidak ada stockpile / jetty."
+                                aria-label="Stockpile / jetty tujuan unit"
+                            />
+                        )}
                         <Combobox
                             size="sm"
                             className="w-40 max-sm:flex-1"

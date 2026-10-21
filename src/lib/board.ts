@@ -69,7 +69,7 @@ export function useUnitBoard(): BoardUnit[] {
                 const activity = activityOf(
                     dev,
                     siteById.get(r.loadingId),
-                    siteById.get(r.unloadingId),
+                    siteById.get(d.unloadingId ?? r.unloadingId),
                 );
                 const mdt = status.get(d.imei) ?? null;
                 out.push({

@@ -101,7 +101,7 @@ function useOperatorDuty(): Map<string, OperatorDuty> {
                             ? activityOf(
                                   dev,
                                   siteById.get(route?.loadingId ?? ''),
-                                  siteById.get(route?.unloadingId ?? ''),
+                                  siteById.get(a.unloadingId ?? route?.unloadingId ?? ''),
                               )
                             : null,
                 });

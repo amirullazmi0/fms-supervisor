@@ -76,9 +76,16 @@ interface SiteForm extends Draft {
 interface RouteForm {
     name: string;
     loadingId: string;
-    unloadingId: string;
+    unloadingId: string; // stockpile / jetty utama
+    extraUnloadingIds: string[]; // stockpile / jetty tambahan
     note: string;
 }
+
+// Body API rute: semua stockpile / jetty, utama dulu.
+type RouteBody = Omit<RouteForm, 'extraUnloadingIds'> & { unloadingIds: string[] };
+
+// Semua stockpile / jetty rute, utama dulu.
+const jettiesOf = (r: Route) => r.unloadingIds ?? [r.unloadingId];
 
 const DEFAULT_RADIUS = 10;
 const emptySite = (): SiteForm => ({
@@ -99,6 +106,7 @@ const routeFormOf = (r: Route): RouteForm => ({
     name: r.name,
     loadingId: r.loadingId,
     unloadingId: r.unloadingId,
+    extraUnloadingIds: jettiesOf(r).slice(1),
     note: r.note ?? '',
 });
 const fmtDist = (m: number) => (m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`);
@@ -395,7 +403,13 @@ export default function SitesView() {
                         onNew={() => {
                             setRouteId(null);
                             setEditingRoute(null);
-                            setRouteForm({ name: '', loadingId: '', unloadingId: '', note: '' });
+                            setRouteForm({
+                                name: '',
+                                loadingId: '',
+                                unloadingId: '',
+                                extraUnloadingIds: [],
+                                note: '',
+                            });
                         }}
                         onEdit={(r) => {
                             setRouteId(r.id);
@@ -497,11 +511,12 @@ function SitesPanel({
     const [q, setQ] = useState('');
     const shown = sites.filter((s) => !q || s.name.toLowerCase().includes(q.toLowerCase()));
     const selected = sites.find((s) => s.id === selectedId) ?? null;
-    const usedBy = (id: string) => routes.filter((r) => r.loadingId === id || r.unloadingId === id);
+    const usedBy = (id: string) =>
+        routes.filter((r) => r.loadingId === id || jettiesOf(r).includes(id));
     // "pit di 2 rute · dumping di 1 rute"
     const roleText = (id: string) => {
         const l = routes.filter((r) => r.loadingId === id).length;
-        const u = routes.filter((r) => r.unloadingId === id).length;
+        const u = routes.filter((r) => jettiesOf(r).includes(id)).length;
         const parts = [l && `pit di ${l} rute`, u && `stockpile / jetty di ${u} rute`].filter(
             Boolean,
         );
@@ -1151,7 +1166,7 @@ function RoutesPanel(p: RoutesPanelProps) {
                                     <b className="text-sm">{r.name}</b>
                                     <RoutePair
                                         from={name(r.loadingId)}
-                                        to={name(r.unloadingId)}
+                                        to={jettiesOf(r).map(name).join(' / ')}
                                         className="text-muted-foreground"
                                     />
                                     <span
@@ -1186,7 +1201,7 @@ function RoutesPanel(p: RoutesPanelProps) {
                     <KV
                         rows={[
                             ['Pit', name(selected.loadingId)],
-                            ['Stockpile / jetty', name(selected.unloadingId)],
+                            ['Stockpile / jetty', jettiesOf(selected).map(name).join(' / ')],
                             [
                                 'Jarak lurus',
                                 siteById.get(selected.loadingId) &&
@@ -1249,11 +1264,11 @@ function RouteFormView({
 }: RoutesPanelProps & { form: RouteForm; loadings: Site[]; unloadings: Site[] }) {
     const toast = useToast();
     const can = useCan();
-    const create = useMutationApiRequest<GlobalApiResponse<Route>, RouteForm>({
+    const create = useMutationApiRequest<GlobalApiResponse<Route>, RouteBody>({
         key: 'routes-create',
         config: SILENT,
     });
-    const update = useMutationApiRequest<GlobalApiResponse<Route>, RouteForm>({
+    const update = useMutationApiRequest<GlobalApiResponse<Route>, RouteBody>({
         key: 'routes-update',
         params: () => ({ id: editingId ?? '' }),
         config: SILENT,
@@ -1284,7 +1299,12 @@ function RouteFormView({
         e.preventDefault();
         setSaving(true);
         try {
-            const body = { ...form, name: form.name.trim() };
+            const { extraUnloadingIds, ...rest } = form;
+            const body = {
+                ...rest,
+                name: form.name.trim(),
+                unloadingIds: [form.unloadingId, ...extraUnloadingIds],
+            };
             const saved = (
                 editingId ? await update.mutateAsync(body) : await create.mutateAsync(body)
             ).data!;
@@ -1327,7 +1347,10 @@ function RouteFormView({
                     value={form.loadingId}
                     onChange={(v) => pickSite('loadingId', v)}
                     options={loadings
-                        .filter((s) => s.id !== form.unloadingId)
+                        .filter(
+                            (s) =>
+                                s.id !== form.unloadingId && !form.extraUnloadingIds.includes(s.id),
+                        )
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
                     placeholder="Pilih titik pit…"
                     searchPlaceholder="Cari titik…"
@@ -1345,13 +1368,69 @@ function RouteFormView({
                     value={form.unloadingId}
                     onChange={(v) => pickSite('unloadingId', v)}
                     options={unloadings
-                        .filter((s) => s.id !== form.loadingId)
+                        .filter(
+                            (s) =>
+                                s.id !== form.loadingId && !form.extraUnloadingIds.includes(s.id),
+                        )
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
                     placeholder="Pilih stockpile / jetty…"
                     searchPlaceholder="Cari titik…"
                     aria-label="Stockpile / jetty"
                 />
             </Field>
+            {form.unloadingId && (
+                <Field
+                    label="Stockpile / jetty tambahan"
+                    hint="Opsional. Ritase terhitung di jetty mana pun; tujuan tiap unit di-set di menu Shift."
+                >
+                    <div className="flex flex-col gap-2">
+                        {form.extraUnloadingIds.map((id) => (
+                            <div key={id} className="flex items-center gap-2">
+                                <SiteDot type="unloading" className="size-4 text-[9px]" />
+                                <span className="min-w-0 flex-1 truncate text-sm">
+                                    {unloadings.find((s) => s.id === id)?.name ?? id}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="text-muted-foreground hover:text-destructive"
+                                    onClick={() =>
+                                        set(
+                                            'extraUnloadingIds',
+                                            form.extraUnloadingIds.filter((x) => x !== id),
+                                        )
+                                    }
+                                    aria-label="Hapus stockpile / jetty tambahan"
+                                >
+                                    <Trash2 />
+                                </Button>
+                            </div>
+                        ))}
+                        <Combobox
+                            value=""
+                            onChange={(v) =>
+                                v && set('extraUnloadingIds', [...form.extraUnloadingIds, v])
+                            }
+                            options={unloadings
+                                .filter(
+                                    (s) =>
+                                        s.id !== form.loadingId &&
+                                        s.id !== form.unloadingId &&
+                                        !form.extraUnloadingIds.includes(s.id),
+                                )
+                                .map((s) => ({
+                                    value: s.id,
+                                    label: s.name,
+                                    hint: `${s.radius} m`,
+                                }))}
+                            placeholder="Tambah stockpile / jetty…"
+                            searchPlaceholder="Cari titik…"
+                            aria-label="Tambah stockpile / jetty"
+                        />
+                    </div>
+                </Field>
+            )}
             {roadInfo}
             <Field label="Nama rute">
                 <Input

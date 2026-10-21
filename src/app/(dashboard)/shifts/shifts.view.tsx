@@ -28,7 +28,17 @@ import useMutationApiRequest, { SILENT } from '@/hooks/react-query/useMutationAp
 import { errText } from '@/lib/api-error';
 import { P, useCan } from '@/lib/permissions';
 import type { GlobalApiResponse } from '@/types/api/responses';
-import { addDays, atTime, dateKey, fmtDate, fmtDuration, fmtHm, fmtNum, hmOf } from '@/lib/format';
+import {
+    addDays,
+    atTime,
+    dateKey,
+    fmtDate,
+    fmtDuration,
+    fmtHm,
+    fmtNum,
+    hmOf,
+    truckLabel,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +57,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Empty, Note, RoutePair, Stat } from '@/components/ui/misc';
+import { Empty, KV, Note, RoutePair, SiteDot, Stat } from '@/components/ui/misc';
+import { distanceM } from '@/lib/geo';
 import type { Route, Shift, ShiftBreak, TripRecord } from '@/types/fleet';
 
 const STATUS: Record<Shift['status'] | 'overdue', { label: string; variant: BadgeVariant }> = {
@@ -73,7 +84,11 @@ function useRouteLabel() {
         const r = routes.find((x) => x.id === routeId);
         if (!r) return null;
         const name = (id: string) => sites.find((s) => s.id === id)?.name ?? '?';
-        return { route: r, from: name(r.loadingId), to: name(r.unloadingId) };
+        return {
+            route: r,
+            from: name(r.loadingId),
+            to: (r.unloadingIds ?? [r.unloadingId]).map(name).join(' / '),
+        };
     };
 }
 
@@ -700,6 +715,95 @@ function ShiftForm({
 }
 
 // ---------- Detail shift ----------
+// Stockpile / jetty rute shift ini: unit yang dituju ke tiap jetty dan ritasenya.
+function ShiftJetties({
+    shift,
+    route,
+    trips,
+}: {
+    shift: Shift;
+    route: Route;
+    trips: TripRecord[];
+}) {
+    const { sites, devices, drivers } = useData();
+    const ids = route.unloadingIds ?? [route.unloadingId];
+    const pit = sites.find((x) => x.id === route.loadingId);
+    const open = shift.assignments.filter((a) => a.endAt == null);
+    const avgMs = (xs: TripRecord[]) =>
+        xs.length ? fmtDuration(xs.reduce((n, t) => n + t.durationMs, 0) / xs.length) : '—';
+
+    return (
+        <section className="flex flex-col gap-3" aria-label="Stockpile / jetty">
+            <h3 className="m-0 text-[15px] font-semibold">
+                Stockpile / jetty{' '}
+                <span className="font-normal text-muted-foreground">· {ids.length} tujuan</span>
+            </h3>
+            <div className="grid gap-3 md:grid-cols-2">
+                {ids.map((id, i) => {
+                    const site = sites.find((x) => x.id === id);
+                    const name = site?.name ?? '?';
+                    const units = open.filter((a) => (a.unloadingId ?? ids[0]) === id);
+                    const go = trips.filter(
+                        (t) => t.leg === 'go' && t.status === 'done' && t.unloadingName === name,
+                    );
+                    const back = trips.filter(
+                        (t) => t.leg === 'back' && t.status === 'done' && t.loadingName === name,
+                    );
+                    const dist = site && pit ? distanceM(pit, site) : null;
+                    return (
+                        <Card key={id} className="gap-3 px-4 py-4">
+                            <div className="flex items-center gap-2">
+                                <SiteDot type="unloading" className="size-5 text-[10px]" />
+                                <b className="min-w-0 flex-1 truncate">{name}</b>
+                                {i === 0 && ids.length > 1 && (
+                                    <Badge variant="outline">Utama</Badge>
+                                )}
+                            </div>
+                            <KV
+                                rows={[
+                                    [
+                                        'Jarak lurus dari pit',
+                                        dist == null
+                                            ? '—'
+                                            : dist < 1000
+                                              ? `${Math.round(dist)} m`
+                                              : `${(dist / 1000).toFixed(1)} km`,
+                                    ],
+                                    ['Radius', site ? `${site.radius} m` : '—'],
+                                    ['Unit dituju', `${units.length} unit`],
+                                    ['Ritase selesai', `${go.length} · ${back.length} return`],
+                                    ['Rata-rata hauling', avgMs(go)],
+                                    ['Rata-rata return', avgMs(back)],
+                                ]}
+                            />
+                            {units.length > 0 ? (
+                                <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+                                    {units.map((a) => {
+                                        const d = drivers.find((x) => x.id === a.driverId);
+                                        const t = devices[a.imei];
+                                        return (
+                                            <li key={a.id}>
+                                                <Badge variant="muted">
+                                                    {t ? truckLabel(t) : a.imei}
+                                                    {d ? ` · ${d.name}` : ''}
+                                                </Badge>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            ) : (
+                                <Empty className="text-xs">
+                                    Belum ada unit yang dituju ke sini.
+                                </Empty>
+                            )}
+                        </Card>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
 function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGone: () => void }) {
     const toast = useToast();
     const { routes } = useData();
@@ -928,6 +1032,8 @@ function ShiftDetail({ id, others, onGone }: { id: string; others: Shift[]; onGo
                 />
                 <Stat label="BBM terpakai" value={unit ? `${fmtNum(fuelTotal, 1)} ${unit}` : '—'} />
             </section>
+
+            {route && <ShiftJetties shift={s} route={route} trips={trips} />}
 
             <ShiftCrew
                 shift={s}

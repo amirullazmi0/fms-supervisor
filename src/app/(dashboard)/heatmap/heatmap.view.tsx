@@ -49,7 +49,11 @@ export default function HeatmapView() {
     const shocks = useMemo(() => (showShocks ? (rep?.shocks ?? []) : []), [rep, showShocks]);
     const shownSites = useMemo(() => {
         const r = routes.find((x) => x.id === route);
-        return r ? sites.filter((s) => s.id === r.loadingId || s.id === r.unloadingId) : sites;
+        return r
+            ? sites.filter(
+                  (s) => s.id === r.loadingId || (r.unloadingIds ?? [r.unloadingId]).includes(s.id),
+              )
+            : sites;
     }, [routes, sites, route]);
     // Titik panas = sel lambat (< 10 km/jam) yang sering dilalui.
     const slow = (rep?.cells ?? []).filter((c) => c.avgSpeed < 10 && c.points >= 5).length;
