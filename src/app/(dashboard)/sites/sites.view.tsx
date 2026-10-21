@@ -30,7 +30,7 @@ import useMutationApiRequest, { SILENT } from '@/hooks/react-query/useMutationAp
 import { errText } from '@/lib/api-error';
 import { P, useCan } from '@/lib/permissions';
 import type { GlobalApiResponse } from '@/types/api/responses';
-import { truckLabel } from '@/lib/format';
+import { truckHint, truckLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -847,7 +847,7 @@ function SiteFormView({
                         .map((d) => ({
                             value: d.imei,
                             label: truckLabel(d),
-                            hint: d.vehicle ?? undefined,
+                            hint: truckHint(d),
                         }))}
                     placeholder="Pakai posisi unit sekarang…"
                     searchPlaceholder="Cari plat…"

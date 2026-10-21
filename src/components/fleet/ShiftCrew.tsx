@@ -15,7 +15,7 @@ import useMutationApiRequest, { SILENT } from '@/hooks/react-query/useMutationAp
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { errText } from '@/lib/api-error';
 import type { GlobalApiResponse } from '@/types/api/responses';
-import { fmtDuration, fmtHm, fmtNum, truckLabel } from '@/lib/format';
+import { fmtDuration, fmtHm, fmtNum, truckHint, truckLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -757,7 +757,7 @@ function AssignmentItem({
                             options={freeTrucks.map((t) => ({
                                 value: t.imei,
                                 label: truckLabel(t),
-                                hint: t.vehicle ?? undefined,
+                                hint: truckHint(t),
                             }))}
                             placeholder="Ganti unit…"
                             searchPlaceholder="Cari plat…"

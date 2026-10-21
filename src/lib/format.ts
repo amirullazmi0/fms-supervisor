@@ -97,6 +97,10 @@ export const fmtKm = (meters: number): string => fmtNum(meters / 1000, meters < 
 export const truckLabel = (d: Pick<Device, 'name' | 'imei' | 'plate'>): string =>
     d.plate || displayName(d);
 
+// Keterangan unit di pilihan unit: jenis (DT / EX / LV / SUPPORT) lalu tipe kendaraan.
+export const truckHint = (d: Pick<Device, 'unitType' | 'vehicle'>): string | undefined =>
+    [d.unitType, d.vehicle].filter(Boolean).join(' · ') || undefined;
+
 // Tanggal lokal YYYY-MM-DD (untuk input type=date dan tanggal kerja shift).
 const pad2 = (n: number) => String(n).padStart(2, '0');
 export const dateKey = (d: Date | number = new Date()): string => {

@@ -7,7 +7,7 @@ import useMutationApiRequest, { SILENT } from '@/hooks/react-query/useMutationAp
 import { useToast } from '@/components/fleet/Toasts';
 import { useData } from '@/provider/StreamProvider';
 import { errText } from '@/lib/api-error';
-import { truckLabel } from '@/lib/format';
+import { truckHint, truckLabel } from '@/lib/format';
 import { DELAY_CATEGORY, DELAY_TONE } from '@/lib/labels';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export default function SetUnitStatus({
                             options={Object.values(devices).map((d) => ({
                                 value: d.imei,
                                 label: truckLabel(d),
-                                hint: d.vehicle ?? undefined,
+                                hint: truckHint(d),
                             }))}
                             placeholder="Pilih unit"
                         />

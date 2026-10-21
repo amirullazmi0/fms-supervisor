@@ -18,7 +18,16 @@ import type { GlobalApiResponse } from '@/types/api/responses';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { useData, useStream } from '@/provider/StreamProvider';
 import useFetchApi from '@/hooks/react-query/useFetchApi';
-import { addDays, dateKey, fmtDate, fmtDuration, fmtKm, fmtNum, truckLabel } from '@/lib/format';
+import {
+    addDays,
+    dateKey,
+    fmtDate,
+    fmtDuration,
+    fmtKm,
+    fmtNum,
+    truckHint,
+    truckLabel,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -316,7 +325,7 @@ export default function ReportsView() {
                             ...trucks.map((d) => ({
                                 value: d.imei,
                                 label: truckLabel(d),
-                                hint: d.vehicle ?? undefined,
+                                hint: truckHint(d),
                             })),
                         ]}
                         placeholder="Semua unit"
