@@ -10,7 +10,6 @@ import {
     Layers,
     LocateFixed,
     Pause,
-    Pencil,
     Play,
     Truck,
 } from 'lucide-react';
@@ -18,7 +17,6 @@ import TrackMap from '@/components/fleet/TrackMap';
 import SpeedGauge from '@/components/fleet/SpeedGauge';
 import VehicleSensors from '@/components/fleet/VehicleSensors';
 import RouteReport from '@/components/fleet/RouteReport';
-import TruckForm from '@/components/fleet/TruckForm';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { useToast } from '@/components/fleet/Toasts';
 import { useDone, useDuty, workState } from '@/lib/duty';
@@ -562,7 +560,6 @@ function DetailCard(props: DetailProps) {
     const { d, job } = props;
     const toast = useToast();
     const [collapsed, setCollapsed] = useState(false);
-    const [editing, setEditing] = useState(false);
 
     const copy = async () => {
         try {
@@ -622,7 +619,7 @@ function DetailCard(props: DetailProps) {
                     </TabsList>
                     <div className="min-h-0 overflow-y-auto px-4 pb-4">
                         <TabsContent value="info">
-                            <InfoTab {...props} onEdit={() => setEditing(true)} />
+                            <InfoTab {...props} />
                         </TabsContent>
                         <TabsContent value="driver">
                             <DriverTab job={job} />
@@ -648,12 +645,11 @@ function DetailCard(props: DetailProps) {
                     </div>
                 </Tabs>
             )}
-            <TruckForm d={d} open={editing} onOpenChange={setEditing} />
         </section>
     );
 }
 
-function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => void }) {
+function InfoTab({ d, job, from, to }: DetailProps) {
     const [place, setPlace] = useState<string | null>(null);
     const fetchApi = useFetchApi();
     const st = statusOf(d);
@@ -744,10 +740,6 @@ function InfoTab({ d, job, from, to, onEdit }: DetailProps & { onEdit: () => voi
                 {fuelPct != null && <Mini label="BBM" value={`${fuelPct}%`} />}
                 {n(16) != null && <Mini label="Odometer" value={`${fmtKm(n(16)!)} km`} />}
             </div>
-
-            <Button variant="outline" size="sm" className="self-start" onClick={onEdit}>
-                <Pencil /> Ubah info unit
-            </Button>
         </div>
     );
 }

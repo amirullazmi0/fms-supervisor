@@ -4,8 +4,10 @@
 // Unit yang dipilih & tanggalnya disimpan di URL (?imei=&date=). Buka menu = unit paling atas.
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import RawRecords from '@/components/fleet/RawRecords';
+import TruckForm from '@/components/fleet/TruckForm';
+import { P, useCan } from '@/lib/permissions';
 import DeviceDetail, { useDeviceHistory } from '@/components/fleet/DeviceDetail';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { useData } from '@/provider/StreamProvider';
@@ -67,6 +69,8 @@ export default function FleetView() {
     const job = d ? duty.get(d.imei) : undefined;
     const [rangeMin, setRangeMin] = useState('60');
     const history = useDeviceHistory(d?.imei ?? null, rangeMin);
+    const can = useCan();
+    const [editing, setEditing] = useState(false);
 
     useEffect(() => {
         setStats(
@@ -146,6 +150,15 @@ export default function FleetView() {
                                 </Button>
                                 <h2 className="m-0 text-lg font-semibold">{truckLabel(d)}</h2>
                                 <StatusBadge status={statusOf(d)} />
+                                {can(P.deviceUpdate) && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setEditing(true)}
+                                    >
+                                        <Pencil /> Ubah info unit
+                                    </Button>
+                                )}
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Button
@@ -243,6 +256,7 @@ export default function FleetView() {
                     </>
                 )}
             </section>
+            {d && <TruckForm d={d} open={editing} onOpenChange={setEditing} />}
         </div>
     );
 }
