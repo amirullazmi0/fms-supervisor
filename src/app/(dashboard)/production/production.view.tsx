@@ -6,6 +6,7 @@ import { Pencil } from 'lucide-react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { HeaderStat, useLayout } from '@/components/fleet/Layout';
 import { PageHeader } from '@/components/fleet/Page';
+import ExportButton from '@/components/fleet/ExportButton';
 import {
     FreshnessPanel,
     HourlyPanel,
@@ -92,11 +93,14 @@ export default function ProductionView() {
                 title="Produksi per jam"
                 description="Ritase & tonase per jam (waktu GPS) vs target. Jam berlabel Sementara masih bisa naik saat data dari blank spot masuk."
                 actions={
-                    can(P.unitStatusWrite) ? (
-                        <Button variant="outline" onClick={() => setEditing({})}>
-                            <Pencil /> Input status unit
-                        </Button>
-                    ) : undefined
+                    <div className="flex flex-wrap gap-2">
+                        <ExportButton type="hourly" from={queries.from} to={queries.to} />
+                        {can(P.unitStatusWrite) && (
+                            <Button variant="outline" onClick={() => setEditing({})}>
+                                <Pencil /> Input status unit
+                            </Button>
+                        )}
+                    </div>
                 }
             />
             <div className="flex flex-wrap items-center gap-2">

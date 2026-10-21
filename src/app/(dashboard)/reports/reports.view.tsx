@@ -44,6 +44,7 @@ import {
     TableRow,
 } from '@/components/ui/misc';
 import type { Report, ReportGroup, ReportRow, TripRecord } from '@/types/fleet';
+import ExportButton from '@/components/fleet/ExportButton';
 
 type Preset = 'today' | 'yesterday' | '7d' | 'month' | 'custom';
 
@@ -271,6 +272,12 @@ export default function ReportsView() {
                             />
                         </div>
                     )}
+                    <span className="ml-auto">
+                        <ExportButton
+                            type="ritase"
+                            extra={Object.fromEntries(new URLSearchParams(query))}
+                        />
+                    </span>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
                     <Combobox

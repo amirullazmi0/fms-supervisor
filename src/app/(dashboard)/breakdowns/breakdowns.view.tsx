@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { PageHeader } from '@/components/fleet/Page';
+import ExportButton from '@/components/fleet/ExportButton';
 import { ChartCard } from '@/components/fleet/Charts';
 import { useData } from '@/provider/StreamProvider';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ export default function BreakdownsView() {
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-3 md:p-5">
             <PageHeader
+                actions={<ExportButton type="breakdowns" from={queries.from} />}
                 title="Breakdown & mesin"
                 description="Durasi perbaikan dari status Breakdown (MDT / supervisor). BD beruntun tanpa kembali working dihitung satu perbaikan. MTTR = rata-rata durasi perbaikan yang sudah selesai."
             />

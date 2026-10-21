@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { PageHeader } from '@/components/fleet/Page';
+import ExportButton from '@/components/fleet/ExportButton';
 import { ChartCard } from '@/components/fleet/Charts';
 import { Input } from '@/components/ui/input';
 import { SimpleSelect } from '@/components/ui/select';
@@ -82,6 +83,7 @@ export default function AvailabilityView() {
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-3 md:p-5">
             <PageHeader
+                actions={<ExportButton type="availability" from={queries.from} to={queries.to} />}
                 title="PA & UA"
                 description="Physical Availability & Use of Availability dari log status unit (MDT / supervisor). Basis waktu kalender 24 jam; waktu tanpa status dihitung tersedia tetapi bukan working."
             />

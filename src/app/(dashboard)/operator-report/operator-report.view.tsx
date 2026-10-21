@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { PageHeader } from '@/components/fleet/Page';
+import ExportButton from '@/components/fleet/ExportButton';
 import { ChartCard } from '@/components/fleet/Charts';
 import {
     Empty,
@@ -46,6 +47,7 @@ export default function OperatorReportView() {
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-3 md:p-5">
             <PageHeader
+                actions={<ExportButton type="operators" from={queries.from} />}
                 title="Rapor operator & idle"
                 description="Skor 100 dikurangi overspeed (3/kejadian), mengemudi kasar (1), telat mulai / berhenti lebih awal > 15 mnt (5/kali), dan idle di atas 20% waktu bertugas. Idle = mesin hidup, unit diam."
             />
