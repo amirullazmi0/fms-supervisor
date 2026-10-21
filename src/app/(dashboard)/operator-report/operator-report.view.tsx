@@ -20,6 +20,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { addDays, dateKey, fmtDuration, fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 import type { GlobalApiResponse } from '@/types/api/responses';
 import type { OperatorReport } from '@/types/fleet';
 
@@ -92,7 +93,11 @@ export default function OperatorReportView() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Operator</TableHead>
-                                    <TableHead className="text-right">Skor</TableHead>
+                                    <TableHead className="text-right">
+                                        <span className="inline-flex items-center gap-1">
+                                            Skor <InfoTip id="metric:score" />
+                                        </span>
+                                    </TableHead>
                                     <TableHead className="text-right">Penugasan</TableHead>
                                     <TableHead className="text-right">Ritase</TableHead>
                                     <TableHead className="text-right">Cycle time</TableHead>

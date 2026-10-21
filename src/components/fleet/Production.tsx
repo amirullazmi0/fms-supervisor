@@ -171,6 +171,7 @@ export function HourlyPanel({
     return (
         <ChartCard
             title={`Produksi per jam (${useTon ? 'tonase' : 'ritase'} vs target)`}
+            info="card:hourly"
             hint={
                 <span className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
@@ -289,6 +290,7 @@ export function FreshnessPanel({ list }: { list: Freshness[] }) {
     return (
         <ChartCard
             title="Kesegaran data per unit"
+            info="card:freshness"
             hint="Keterlambatan = waktu diterima server − waktu GPS (12 jam terakhir)"
         >
             {list.length === 0 ? (
@@ -346,7 +348,11 @@ export function UnitStatusPanel({
 }) {
     const now = useNow(30000);
     return (
-        <ChartCard title="Status unit sekarang" hint="Dari MDT operator / input supervisor">
+        <ChartCard
+            title="Status unit sekarang"
+            info="card:unit-status"
+            hint="Dari MDT operator / input supervisor"
+        >
             {list.length === 0 ? (
                 <Empty>Belum ada status dari MDT.</Empty>
             ) : (
@@ -386,6 +392,7 @@ export function StagesPanel({ report }: { report: StageReport | null }) {
     return (
         <ChartCard
             title="Cycle time per tahap"
+            info="card:stages"
             hint="Rata-rata ritase selesai. Spotting + muat/dumping butuh zona spot di titik."
         >
             {rows.length === 0 ? (

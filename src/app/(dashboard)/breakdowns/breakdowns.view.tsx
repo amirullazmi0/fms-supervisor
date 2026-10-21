@@ -65,7 +65,7 @@ export default function BreakdownsView() {
             </ToggleGroup>
 
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Stat big label="MTTR semua unit" value={ms(rep?.mttrMs)} />
+                <Stat big label="MTTR semua unit" info="metric:mttr" value={ms(rep?.mttrMs)} />
                 <Stat
                     big
                     label="Kejadian breakdown"

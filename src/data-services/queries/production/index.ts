@@ -11,6 +11,7 @@ export type ProductionQueryKeys =
     | 'reports-overspeed'
     | 'reports-breakdowns'
     | 'reports-operators'
+    | 'features'
     | 'speed-zones'
     | 'production-targets'
     | 'delay-codes'
@@ -28,6 +29,7 @@ export const productionQueries: QueriesDataService<ProductionQueryKeys> = {
     'reports-overspeed': '/reports/overspeed',
     'reports-breakdowns': '/reports/breakdowns',
     'reports-operators': '/reports/operators',
+    features: '/features',
     'speed-zones': '/speed-zones',
     'production-targets': '/production-targets',
     'delay-codes': '/delay-codes',

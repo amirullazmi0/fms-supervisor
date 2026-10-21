@@ -7,6 +7,7 @@ import { Badge } from './badge';
 import type { BadgeVariant } from './badge';
 import type { Status } from '@/lib/format';
 import { STATUS_LABEL } from '@/lib/format';
+import { InfoTip } from '@/components/ui/info-tip';
 
 export function Separator({
     className,
@@ -77,6 +78,7 @@ export function Stat({
     sub,
     className,
     big = false,
+    info,
 }: {
     label: ReactNode;
     value: ReactNode;
@@ -84,6 +86,7 @@ export function Stat({
     sub?: ReactNode;
     className?: string;
     big?: boolean;
+    info?: string; // id isi tombol info (lib/help.ts)
 }) {
     return (
         <div
@@ -92,7 +95,10 @@ export function Stat({
                 className,
             )}
         >
-            <span className="truncate text-xs text-muted-foreground">{label}</span>
+            <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                <span className="truncate">{label}</span>
+                {info && <InfoTip id={info} />}
+            </span>
             <span
                 className={cn(
                     'truncate font-semibold tabular-nums tracking-tight',

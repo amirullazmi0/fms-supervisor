@@ -481,7 +481,8 @@ export type StreamMsg =
     | { type: 'log'; entry: LogEntry }
     | { type: 'unit_status'; imei: string } // status unit berubah (MDT / supervisor)
     | { type: 'dispatch' } // excavator fleet berubah
-    | { type: 'speed_zones' }; // zona batas kecepatan berubah
+    | { type: 'speed_zones' } // zona batas kecepatan berubah
+    | { type: 'features' }; // fitur dinyalakan / dimatikan (mis. Info & panduan)
 
 // ---------- Produksi, status unit, MDT ----------
 

@@ -46,6 +46,7 @@ import { DARK_MODE_ENABLED, useTheme } from '@/lib/theme';
 import type { ThemeMode } from '@/lib/theme';
 import { useAuth } from '@/hooks/react-query/useAuth';
 import { P } from '@/lib/permissions';
+import { InfoTip } from '@/components/ui/info-tip';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Permission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
@@ -281,6 +282,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <h1 className="m-0 text-base font-semibold tracking-tight md:text-lg">
                         {page?.label ?? 'FMS'}
                     </h1>
+                    {page && <InfoTip id={`page:${page.to}`} />}
                     <span
                         className={cn(
                             'hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide sm:inline',

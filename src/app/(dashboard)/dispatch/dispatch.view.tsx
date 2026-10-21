@@ -28,6 +28,7 @@ import { errText } from '@/lib/api-error';
 import { fmtDuration, fmtNum, truckLabel } from '@/lib/format';
 import { P, useCan } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
+import { InfoTip } from '@/components/ui/info-tip';
 import type { GlobalApiResponse } from '@/types/api/responses';
 import type { DispatchBoard, Fleet, FleetMove, FleetTruck, MatchClass } from '@/types/fleet';
 
@@ -176,7 +177,9 @@ function FleetCard({
                     >
                         {mfText(f.matchFactor)}
                     </p>
-                    <p className="m-0 text-xs text-muted-foreground">Match factor</p>
+                    <p className="m-0 flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                        Match factor <InfoTip id="metric:mf" />
+                    </p>
                 </div>
             </header>
             {m && (

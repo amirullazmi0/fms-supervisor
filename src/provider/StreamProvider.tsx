@@ -152,6 +152,9 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
                 case 'dispatch':
                     refetch('dispatch-fleets');
                     break;
+                case 'features':
+                    refetch('features');
+                    break;
                 case 'sites':
                     refetch('sites', 'routes');
                     break;

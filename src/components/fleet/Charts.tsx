@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { fmtNum } from '@/lib/format';
 import { Tip } from '@/components/ui/misc';
+import { InfoTip } from '@/components/ui/info-tip';
 
 // Series colors (same tokens as the rest of the UI).
 export const SERIES = [
@@ -216,8 +217,10 @@ export function ChartCard({
     hint,
     children,
     className,
+    info,
 }: {
     title: ReactNode;
+    info?: string; // id isi tombol info (lib/help.ts)
     hint?: ReactNode;
     children: ReactNode;
     className?: string;
@@ -227,7 +230,10 @@ export function ChartCard({
             className={cn('flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4', className)}
         >
             <header className="flex items-baseline justify-between gap-2">
-                <h2 className="m-0 text-sm font-semibold">{title}</h2>
+                <h2 className="m-0 flex items-center gap-1.5 text-sm font-semibold">
+                    {title}
+                    {info && <InfoTip id={info} />}
+                </h2>
                 {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
             </header>
             {children}

@@ -150,24 +150,28 @@ export default function AvailabilityView() {
                 <Stat
                     big
                     label="PA (Physical Availability)"
+                    info="metric:pa"
                     value={pctText(sum.pa)}
                     sub="(T − BD) ÷ T"
                 />
                 <Stat
                     big
                     label="UA (Use of Availability)"
+                    info="metric:ua"
                     value={pctText(sum.ua)}
                     sub="Working ÷ (T − BD)"
                 />
                 <Stat
                     big
                     label="MA (Mechanical Availability)"
+                    info="metric:ma"
                     value={pctText(sum.ma)}
                     sub="Working ÷ (Working + BD)"
                 />
                 <Stat
                     big
                     label="EU (Effective Utilization)"
+                    info="metric:eu"
                     value={pctText(sum.eu)}
                     sub="Working ÷ T"
                 />
