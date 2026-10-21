@@ -2,7 +2,7 @@
 // Peta heat map jalan (P3-2): gradasi halus biru → hijau → kuning → merah di atas peta (teknik
 // simpleheat di canvas, tanpa dependensi tambahan). Mode "slow": merah = unit lambat & sering lewat
 // (titik panas / bottleneck). Mode "traffic": merah = jalan paling padat. Plus titik guncangan
-// akselerometer dan front / dumping.
+// akselerometer dan pit / stockpile / jetty.
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';

@@ -69,12 +69,12 @@ export const SOURCE: Record<string, string> = {
 
 // Tahap cycle time (notes 2.4).
 export const STAGE = {
-    queueLoad: 'Antre di front',
+    queueLoad: 'Antre di pit',
     spotLoad: 'Spotting + loading',
-    workLoad: 'Manuver di front',
+    workLoad: 'Manuver di pit',
     hauling: 'Hauling (bermuatan)',
-    queueDump: 'Antre di dumping',
+    queueDump: 'Antre di stockpile / jetty',
     spotDump: 'Spotting + dumping',
-    workDump: 'Manuver di dumping',
+    workDump: 'Manuver di stockpile / jetty',
     returning: 'Return (kosongan)',
 };

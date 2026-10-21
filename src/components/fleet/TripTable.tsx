@@ -1,5 +1,5 @@
 'use client';
-// Tabel ritase tersimpan: berangkat dari front loading, tiba di dumping, durasi, berhenti, BBM.
+// Tabel ritase tersimpan: berangkat dari pit, tiba di stockpile / jetty, durasi, berhenti, BBM.
 // Di HP tabel bergeser horizontal, kolom pertama tetap menempel.
 import { fmtDuration, fmtHm, fmtKm, fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';

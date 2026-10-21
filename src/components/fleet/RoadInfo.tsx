@@ -1,5 +1,5 @@
 'use client';
-// Jalur jalan front loading → dumping dan estimasi waktu tempuh unit.
+// Jalur jalan pit → stockpile / jetty dan estimasi waktu tempuh unit.
 // Bila server routing tidak terjangkau, tampilkan perkiraan kasar dari jarak lurus.
 import type { ReactNode } from 'react';
 import { fmtDuration, fmtNum } from '@/lib/format';
@@ -24,7 +24,7 @@ interface Props {
     from: LatLng;
     to: LatLng;
     road: RoadState;
-    roadBack?: RoadState; // jalur return (dumping → front loading)
+    roadBack?: RoadState; // jalur return (stockpile / jetty → pit)
     active: number;
     onActive: (i: number) => void;
     history: RouteHistory | null; // null = rute belum disimpan / belum dimuat
@@ -38,12 +38,12 @@ export default function RoadInfo(props: Props) {
                 <>
                     <UsualInfo
                         path={props.history.paths?.go}
-                        title="Jalan pergi (loading → dumping)"
+                        title="Jalan pergi (pit → stockpile / jetty)"
                         line="actual"
                     />
                     <UsualInfo
                         path={props.history.paths?.back}
-                        title="Jalan return (dumping → front loading)"
+                        title="Jalan return (stockpile / jetty → pit)"
                         line="back"
                     />
                 </>
@@ -104,7 +104,7 @@ function HistoryInfo({ history: h }: { history: RouteHistory | null }) {
             <Box line="actual" title="Jalur asli unit">
                 <Empty>
                     Belum ada ritase selesai di rute ini dalam {h.days} hari terakhir. Garis jalan
-                    asli muncul setelah unit pertama kali jalan dari loading ke dumping.
+                    asli muncul setelah unit pertama kali jalan dari pit ke stockpile / jetty.
                 </Empty>
             </Box>
         );
@@ -176,7 +176,7 @@ function BackInfo({ road }: { road?: RoadState }) {
     const p = road?.data?.paths[0];
     if (!road || road.loading || !p) return null;
     return (
-        <Box line="back" title="Jalur return (dumping → front loading)">
+        <Box line="back" title="Jalur return (stockpile / jetty → pit)">
             <Nums
                 items={[
                     ['Jarak', km(p.distance)],
@@ -216,7 +216,7 @@ function PlannedInfo({ from, to, road, active, onActive, history }: Props) {
 
     const { paths, truckFactor } = road.data;
     return (
-        <Box line="planned" title="Jalur pergi (loading → dumping)">
+        <Box line="planned" title="Jalur pergi (pit → stockpile / jetty)">
             <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
                 {paths.map((p, i) => (
                     <li key={i}>

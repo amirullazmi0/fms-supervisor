@@ -175,8 +175,8 @@ export function StatusBadge({ status, className }: { status: Status; className?:
     );
 }
 
-// ---------- Front loading / dumping ----------
-// Titik: L (front loading, hijau), U (dumping, oranye), atau tanpa peran (biru, master titik).
+// ---------- Pit / dumping ----------
+// Titik: L (pit, hijau), U (dumping, oranye), atau tanpa peran (biru, master titik).
 export function SiteDot({
     type,
     className,

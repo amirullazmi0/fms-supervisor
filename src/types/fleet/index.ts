@@ -167,10 +167,10 @@ export interface DaySummary {
     points: TrackPoint[];
 }
 
-// Peran titik di sebuah rute. Titik sendiri tidak punya jenis: front loading / dumping ditentukan rute.
+// Peran titik di sebuah rute. Titik sendiri tidak punya jenis: pit / stockpile / jetty ditentukan rute.
 export type SiteType = 'loading' | 'unloading';
 
-// Master titik (geofence): lokasi + radius. Satu titik bisa menjadi front loading di rute A dan dumping di rute B.
+// Master titik (geofence): lokasi + radius. Satu titik bisa menjadi pit di rute A dan dumping di rute B.
 export interface Site {
     id: string;
     name: string;
@@ -231,7 +231,7 @@ export interface RouteHistory {
         durationMs: number;
         coords: [number, number][];
     } | null;
-    // Jalan yang biasa dilalui operator: hauling (front loading → dumping) & return (dumping → front loading).
+    // Jalan yang biasa dilalui operator: hauling (pit → stockpile / jetty) & return (stockpile / jetty → pit).
     paths?: { go: UsualPath | null; back: UsualPath | null } | null;
 }
 
@@ -260,7 +260,7 @@ export interface OnDuty {
     closedAt?: number | null;
 }
 
-// Rute = 1 titik front loading + 1 titik dumping. Operator & unit masuk ke rute lewat penugasan shift.
+// Rute = 1 titik pit + 1 stockpile / jetty. Operator & unit masuk ke rute lewat penugasan shift.
 export interface Route {
     id: string;
     name: string;
@@ -283,11 +283,11 @@ export interface SiteVisit {
     dwellMs: number;
 }
 
-// Arah perjalanan di rute: go = hauling (front loading → dumping, bermuatan), back = return (dumping → front loading).
+// Arah perjalanan di rute: go = hauling (pit → stockpile / jetty, bermuatan), back = return (stockpile / jetty → pit).
 export type TripLeg = 'go' | 'back';
 
 // Satu perjalanan di rute, hauling atau return.
-// `loading` = kunjungan di titik ASAL, `unloading` = kunjungan di titik TUJUAN (return: asal = titik dumping rute).
+// `loading` = kunjungan di titik ASAL, `unloading` = kunjungan di titik TUJUAN (return: asal = stockpile / jetty rute).
 export interface RouteTrip {
     routeId: string;
     routeName: string;
@@ -431,7 +431,7 @@ export interface TripRecord {
 
 export type ReportGroup = 'route' | 'driver' | 'truck' | 'shift' | 'day' | 'hour';
 
-// trips/done/avg/min/max = hauling (front loading → dumping). Jarak, berhenti, BBM total = dua arah.
+// trips/done/avg/min/max = hauling (pit → stockpile / jetty). Jarak, berhenti, BBM total = dua arah.
 export interface ReportRow {
     key: string;
     label: string;
@@ -441,7 +441,7 @@ export interface ReportRow {
     avgDurationMs: number;
     minDurationMs: number;
     maxDurationMs: number;
-    backDone: number; // return (dumping → front loading) yang selesai
+    backDone: number; // return (stockpile / jetty → pit) yang selesai
     backAvgMs: number;
     backMinMs: number;
     backMaxMs: number;
@@ -668,7 +668,7 @@ export interface FleetTruck {
     driverName: string;
     category: DelayCategory | '';
     status: string | null; // nama delay code
-    atFront: boolean; // di radius front loading, diam
+    atFront: boolean; // di radius pit, diam
     gpsAgeMs: number | null;
     inactive?: string; // alasan tidak produksi (kosong = aktif)
 }

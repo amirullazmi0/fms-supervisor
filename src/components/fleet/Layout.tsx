@@ -197,7 +197,7 @@ const NAV: {
     },
     {
         to: '/sites',
-        label: 'Front, dumping & rute',
+        label: 'Pit, stockpile / jetty & rute',
         icon: MapPin,
         need: [P.siteRead, P.routeRead],
         group: 'Master data',

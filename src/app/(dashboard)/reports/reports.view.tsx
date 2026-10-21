@@ -359,7 +359,7 @@ export default function ReportsView() {
                             big
                         />
                         <Stat
-                            label="Hauling (front → dumping)"
+                            label="Hauling (pit → stockpile / jetty)"
                             value={t.done ? fmtDuration(t.avgDurationMs) : '—'}
                             sub={
                                 t.done
@@ -369,7 +369,7 @@ export default function ReportsView() {
                             big
                         />
                         <Stat
-                            label="Return (dumping → front)"
+                            label="Return (stockpile / jetty → pit)"
                             value={t.backDone ? fmtDuration(t.backAvgMs) : '—'}
                             sub={
                                 t.backDone
@@ -395,7 +395,7 @@ export default function ReportsView() {
                             sub={t.avgFuel != null ? `${fuel(t.avgFuel)} / ritase` : undefined}
                         />
                         <Stat
-                            label="BBM loading → dumping"
+                            label="BBM pit → stockpile / jetty"
                             value={
                                 t.avgFuelAtLoading != null
                                     ? `${fmtNum(t.avgFuelAtLoading, 1)} → ${fmtNum(t.avgFuelAtUnloading ?? 0, 1)}`
@@ -424,7 +424,7 @@ export default function ReportsView() {
                 {!loading && rows.length === 0 ? (
                     <Empty className="px-4 pb-4">
                         Belum ada ritase di periode ini. Ritase tercatat dari penugasan shift: tiap
-                        kali unit keluar dari front loading lalu sampai di titik dumping rutenya.
+                        kali unit keluar dari pit lalu sampai di stockpile / jetty rutenya.
                     </Empty>
                 ) : (
                     <Table>
@@ -441,7 +441,9 @@ export default function ReportsView() {
                                 {th('stops', 'Berhenti')}
                                 {th('fuelUsed', 'BBM total')}
                                 {th('avgFuel', 'BBM / ritase')}
-                                <TableHead className="text-right">BBM loading → dumping</TableHead>
+                                <TableHead className="text-right">
+                                    BBM pit → stockpile / jetty
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

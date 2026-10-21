@@ -1,4 +1,4 @@
-// Aktivitas unit saat ini & lokasinya, dari posisi GPS terakhir terhadap front loading / dumping
+// Aktivitas unit saat ini & lokasinya, dari posisi GPS terakhir terhadap pit / stockpile / jetty
 // rutenya (beserta zona antre / spot bila ada) dan arah hadap unit.
 import { distanceM } from '@/lib/geo';
 import type { Device, Site, SiteZone } from '@/types/fleet';

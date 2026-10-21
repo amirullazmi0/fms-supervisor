@@ -1,5 +1,5 @@
 'use client';
-// Ritase unit per rute: berangkat dari front loading rute sampai tiba di dumping rute tersebut.
+// Ritase unit per rute: berangkat dari pit rute sampai tiba di stockpile / jetty rute tersebut.
 // Per ritase: durasi, jarak, berapa kali berhenti, lama berhenti, BBM.
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -115,7 +115,7 @@ export default function RouteReport({ imei, date, isToday, selected, onSelect }:
                     {report.trips.length === 0 ? (
                         <Empty>
                             Belum ada ritase pada tanggal ini. Ritase terhitung setelah unit keluar
-                            dari front loading rute lalu masuk ke titik dumping rute yang sama.
+                            dari pit rute lalu masuk ke stockpile / jetty rute yang sama.
                         </Empty>
                     ) : (
                         <ol className="m-0 flex list-none flex-col gap-2 p-0">

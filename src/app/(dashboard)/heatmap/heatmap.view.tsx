@@ -1,6 +1,6 @@
 'use client';
 // Heat map jalan (P3-2): kecepatan unit per segmen jalan selama ritase (bermuatan / kosongan, titik
-// di dalam radius front & dumping dibuang) + titik guncangan akselerometer (indikasi jalan rusak).
+// di dalam radius pit & stockpile / jetty dibuang) + titik guncangan akselerometer (indikasi jalan rusak).
 import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
@@ -62,7 +62,7 @@ export default function HeatmapView() {
         <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-3 p-3 md:p-5">
             <PageHeader
                 title="Heat map jalan"
-                description="Kecepatan unit per segmen jalan selama ritase, di luar radius front loading & dumping. Mode titik panas: merah = unit lambat dan sering lewat (bottleneck). Arahkan kursor ke jalan untuk melihat angkanya."
+                description="Kecepatan unit per segmen jalan selama ritase, di luar radius pit & stockpile / jetty. Mode titik panas: merah = unit lambat dan sering lewat (bottleneck). Arahkan kursor ke jalan untuk melihat angkanya."
             />
             <div className="flex flex-wrap items-center gap-2">
                 <ToggleGroup

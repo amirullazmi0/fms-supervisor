@@ -1,5 +1,5 @@
 'use client';
-// Laporan → waktu di front loading / dumping: rata-rata + daftar mentah setiap kali unit
+// Laporan → waktu di pit / stockpile / jetty: rata-rata + daftar mentah setiap kali unit
 // berada di titik (masuk, keluar, durasi). Unit yang masih di dalam ikut dihitung sampai sekarang.
 import { useState } from 'react';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
@@ -59,7 +59,7 @@ export default function SiteVisits({ query }: { query: string }) {
     return (
         <Card className="gap-3 pb-1">
             <div className="flex flex-wrap items-center justify-between gap-2 px-4">
-                <h2 className="m-0 text-base font-semibold">Waktu di front loading & dumping</h2>
+                <h2 className="m-0 text-base font-semibold">Waktu di pit & stockpile / jetty</h2>
                 <ToggleGroup
                     type="single"
                     value={role}
@@ -67,15 +67,15 @@ export default function SiteVisits({ query }: { query: string }) {
                     aria-label="Jenis titik"
                 >
                     <ToggleGroupItem value="all">Semua</ToggleGroupItem>
-                    <ToggleGroupItem value="loading">Loading</ToggleGroupItem>
-                    <ToggleGroupItem value="unloading">Dumping</ToggleGroupItem>
+                    <ToggleGroupItem value="loading">Pit</ToggleGroupItem>
+                    <ToggleGroupItem value="unloading">Stockpile / jetty</ToggleGroupItem>
                 </ToggleGroup>
             </div>
             {stats && (
                 <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4">
-                    <Avg label="Rata-rata di front loading" s={stats.loading} />
+                    <Avg label="Rata-rata di pit" s={stats.loading} />
                     <Stat
-                        label="Terlama di front loading"
+                        label="Terlama di pit"
                         value={
                             stats.loading.maxDwellMs ? fmtDuration(stats.loading.maxDwellMs) : '—'
                         }
@@ -85,9 +85,9 @@ export default function SiteVisits({ query }: { query: string }) {
                                 : undefined
                         }
                     />
-                    <Avg label="Rata-rata di dumping" s={stats.unloading} />
+                    <Avg label="Rata-rata di stockpile / jetty" s={stats.unloading} />
                     <Stat
-                        label="Terlama di dumping"
+                        label="Terlama di stockpile / jetty"
                         value={
                             stats.unloading.maxDwellMs
                                 ? fmtDuration(stats.unloading.maxDwellMs)
@@ -105,7 +105,7 @@ export default function SiteVisits({ query }: { query: string }) {
                 <Empty className="px-4 pb-4">Memuat…</Empty>
             ) : rows.length === 0 ? (
                 <Empty className="px-4 pb-4">
-                    Belum ada unit yang mampir di front loading / dumping di periode ini.
+                    Belum ada unit yang mampir di pit / stockpile / jetty di periode ini.
                 </Empty>
             ) : (
                 <Table>
@@ -138,7 +138,7 @@ export default function SiteVisits({ query }: { query: string }) {
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
                                     <Badge variant={v.role === 'loading' ? 'success' : 'warning'}>
-                                        {v.role === 'loading' ? 'Loading' : 'Dumping'}
+                                        {v.role === 'loading' ? 'Pit' : 'Stockpile / jetty'}
                                     </Badge>{' '}
                                     {v.siteName}
                                 </TableCell>

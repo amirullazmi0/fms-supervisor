@@ -69,7 +69,7 @@ interface Props {
     playhead: TrackPoint | null;
     follow: boolean;
     fitKey: string; // berubah = peta di-zoom ulang ke rute (ganti unit / ganti tanggal)
-    sites: Site[]; // front loading/dumping unit yang dipilih
+    sites: Site[]; // pit / stockpile / jetty unit yang dipilih
     siteRoles: Map<string, SiteType>; // peran tiap titik di rute unit
     routeLines: { id: string; name: string; coords: [number, number][]; actual: boolean }[]; // jalur rute unit
     highlight: { start: number; end: number } | null; // ritase yang sedang disorot
@@ -285,7 +285,7 @@ export default function TrackMap({
         }
     }, [day, focus, fitKey]);
 
-    // Front loading/dumping
+    // Pit / stockpile / jetty
     useEffect(() => {
         if (!siteLayer.current) return;
         const name = (imei: string) => {
@@ -321,7 +321,7 @@ export default function TrackMap({
         }
     }, [routeLines]);
 
-    // Ritase yang dipilih: rute dari keluar front loading sampai tiba di dumping
+    // Ritase yang dipilih: rute dari keluar pit sampai tiba di stockpile / jetty
     useEffect(() => {
         const m = map.current;
         const g = hlLayer.current;

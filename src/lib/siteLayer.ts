@@ -1,5 +1,5 @@
 // Gambar titik (master titik) di peta Leaflet: lingkaran sesuai radius + penanda.
-// Titik tidak memiliki jenis tetap. Saat menampilkan rute, perannya (front loading / dumping) diberikan melalui `roles`.
+// Titik tidak memiliki jenis tetap. Saat menampilkan rute, perannya (pit / stockpile / jetty) diberikan melalui `roles`.
 import L from 'leaflet';
 import type { Site, SiteType } from '@/types/fleet';
 
@@ -10,7 +10,10 @@ export const ROLE_COLOR: Record<SiteType | 'none', string> = {
     unloading: '#e07b00',
     none: '#2f6fe4',
 };
-export const ROLE_LABEL: Record<SiteType, string> = { loading: 'Loading', unloading: 'Dumping' };
+export const ROLE_LABEL: Record<SiteType, string> = {
+    loading: 'Pit',
+    unloading: 'Stockpile / jetty',
+};
 
 export const escHtml = (s: string) =>
     s.replace(

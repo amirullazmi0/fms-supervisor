@@ -1,5 +1,5 @@
 'use client';
-// Peta halaman Front, dumping & rute: semua titik, posisi unit, titik yang sedang diedit, dan rute yang dipilih.
+// Peta halaman Pit, stockpile / jetty & rute: semua titik, posisi unit, titik yang sedang diedit, dan rute yang dipilih.
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { TRUCK_GLYPH } from '@/lib/markers';
@@ -29,14 +29,14 @@ interface Props {
     onSelect: (id: string) => void;
     onPick: (lat: number, lng: number) => void; // klik peta / geser penanda
     canEdit: boolean; // true = sedang memasang/memindahkan titik. false = klik peta hanya menampilkan info koordinat
-    routeLine: { from: Site; to: Site } | null; // rute yang sedang dipilih: garis front loading -> dumping
+    routeLine: { from: Site; to: Site } | null; // rute yang sedang dipilih: garis pit -> dumping
     roles?: Map<string, SiteType>; // peran titik di rute yang sedang dipilih (L/U di penanda)
     roadPaths: [number, number][][] | null; // jalur jalan (dari OSRM). null = garis lurus saja
     activePath: number;
     onPathClick: (i: number) => void;
     actualPath: [number, number][] | null; // jalan pergi yang biasa dilalui (jejak GPS ritase)
     backPath?: [number, number][] | null; // jalan return yang biasa dilalui
-    roadBackPath?: [number, number][] | null; // jalur jalan return (dumping → front loading) dari routing
+    roadBackPath?: [number, number][] | null; // jalur jalan return (stockpile / jetty → pit) dari routing
     zoneEdit?: { siteId: string; zones: SiteZone[] } | null; // zona antre/spot yang sedang diedit (bisa digeser)
     onZoneMove?: (i: number, lat: number, lng: number) => void;
     className?: string;
@@ -56,8 +56,8 @@ function zoneCircle(z: SiteZone, editing: boolean): L.Circle {
     });
 }
 
-const ROUTE_GO = '#16a34a'; // menuju dumping (hauling)
-const ROUTE_BACK = '#e07b00'; // menuju front loading (return)
+const ROUTE_GO = '#16a34a'; // menuju stockpile / jetty (hauling)
+const ROUTE_BACK = '#e07b00'; // menuju pit (return)
 
 // Panah arah di sepanjang garis (tiap ±1/6 panjang, minimal 300 m sekali).
 function addArrows(g: L.LayerGroup, coords: [number, number][], color: string) {
@@ -238,7 +238,7 @@ export default function SitesMap({
         }
     }, [devices, duty]);
 
-    // Rute yang dipilih: jalan hauling (hijau, menuju dumping) & return (oranye, menuju front loading),
+    // Rute yang dipilih: jalan hauling (hijau, menuju stockpile / jetty) & return (oranye, menuju pit),
     // panah = arah jalan. Peta zoom ke rutenya.
     const lineKey = routeLine
         ? `${routeLine.from.id}|${routeLine.to.id}|${routeLine.from.lat},${routeLine.from.lng}|${routeLine.to.lat},${routeLine.to.lng}`
@@ -289,7 +289,7 @@ export default function SitesMap({
             }).addTo(g);
             L.polyline(back, { color: ROUTE_BACK, weight: 9, opacity: 0.9 })
                 .bindTooltip(
-                    `Menuju front loading (return) · ${backReal ? 'jalan yang biasa dilalui unit' : 'jalur dari peta jalan'}`,
+                    `Menuju pit (return) · ${backReal ? 'jalan yang biasa dilalui unit' : 'jalur dari peta jalan'}`,
                     { sticky: true },
                 )
                 .addTo(g);
@@ -305,7 +305,7 @@ export default function SitesMap({
             ...(goStraight ? { dashArray: '8 8' } : {}),
         })
             .bindTooltip(
-                `Menuju dumping (pergi) · ${goReal ? 'jalan yang biasa dilalui unit' : goStraight ? 'garis lurus (jalur jalan belum ada)' : 'jalur dari peta jalan'}`,
+                `Menuju stockpile / jetty (pergi) · ${goReal ? 'jalan yang biasa dilalui unit' : goStraight ? 'garis lurus (jalur jalan belum ada)' : 'jalur dari peta jalan'}`,
                 { sticky: true },
             )
             .addTo(g);
@@ -316,8 +316,8 @@ export default function SitesMap({
         ctl.onAdd = () => {
             const el = L.DomUtil.create('div', 'route-legend');
             el.innerHTML = `
-        <div><i style="background:${ROUTE_GO}"></i><b>Menuju dumping</b> (pergi) <small>${escHtml(routeLine.from.name)} → ${escHtml(routeLine.to.name)}</small></div>
-        ${back ? `<div><i style="background:${ROUTE_BACK}"></i><b>Menuju front loading</b> (return) <small>${escHtml(routeLine.to.name)} → ${escHtml(routeLine.from.name)}</small></div>` : ''}
+        <div><i style="background:${ROUTE_GO}"></i><b>Menuju stockpile / jetty</b> (pergi) <small>${escHtml(routeLine.from.name)} → ${escHtml(routeLine.to.name)}</small></div>
+        ${back ? `<div><i style="background:${ROUTE_BACK}"></i><b>Menuju pit</b> (return) <small>${escHtml(routeLine.to.name)} → ${escHtml(routeLine.from.name)}</small></div>` : ''}
         <div class="muted">${goReal || backReal ? 'Garis = jalan yang biasa dilalui unit (dari ritase).' : 'Garis = jalur dari peta jalan, belum ada ritase.'} Panah = arah.</div>`;
             L.DomEvent.disableClickPropagation(el);
             return el;

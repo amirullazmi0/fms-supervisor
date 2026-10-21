@@ -233,7 +233,7 @@ export default function HomeView() {
                 <Panel
                     className="lg:col-span-2"
                     title="Papan unit bertugas"
-                    hint="Status MDT operator diutamakan, lalu posisi GPS terhadap front / dumping"
+                    hint="Status MDT operator diutamakan, lalu posisi GPS terhadap pit / stockpile / jetty"
                 >
                     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter papan">
                         <Chip active={column === 'all'} onClick={() => setColumn('all')}>

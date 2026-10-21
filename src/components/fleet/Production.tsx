@@ -481,7 +481,7 @@ export function StagesPanel({ report }: { report: StageReport | null }) {
                                     ))}
                                 </ul>
                                 <div className="mt-1.5 text-xs text-muted-foreground">
-                                    Di front {fmtDuration(siteMs(r.loading))}, di dumping{' '}
+                                    Di pit {fmtDuration(siteMs(r.loading))}, di stockpile / jetty{' '}
                                     {fmtDuration(siteMs(r.unloading))}
                                 </div>
                             </div>

@@ -743,7 +743,7 @@ function AssignmentItem({
                             empty={
                                 status === 'planned'
                                     ? 'Shift belum mulai.'
-                                    : 'Belum ada ritase. Ritase terhitung setelah unit keluar dari front loading lalu tiba di dumping.'
+                                    : 'Belum ada ritase. Ritase terhitung setelah unit keluar dari pit lalu tiba di stockpile / jetty.'
                             }
                         />
                     </div>

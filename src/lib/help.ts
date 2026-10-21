@@ -29,7 +29,7 @@ export const HELP: Record<string, HelpEntry> = {
             'Unit di area tanpa sinyal (blank spot) menyimpan data di memori alat dan mengirimkannya begitu sinyal kembali, sehingga jejak bisa bertambah belakangan.',
         ],
         terms: [
-            ['Ritase', 'Satu perjalanan bermuatan dari front loading sampai tiba di dumping.'],
+            ['Ritase', 'Satu perjalanan bermuatan dari pit sampai tiba di stockpile / jetty.'],
             ['Blank spot', 'Area tanpa sinyal; data dikirim terlambat (store & forward).'],
         ],
     },
@@ -38,7 +38,7 @@ export const HELP: Record<string, HelpEntry> = {
         summary:
             'Keseimbangan DT dan excavator per fleet: match factor, antrean, hanging time, dan saran pindah DT.',
         body: [
-            'Setiap kartu adalah satu fleet (rute + excavator). Bila MF di bawah 0,9 excavator menunggu DT; di atas 1,1 DT antre di front.',
+            'Setiap kartu adalah satu fleet (rute + excavator). Bila MF di bawah 0,9 excavator menunggu DT; di atas 1,1 DT antre di pit.',
             'Saran redistribusi memindahkan satu DT dari fleet overmatch ke fleet undermatch bila keduanya menjadi lebih seimbang. Tombol "Pindahkan" menyelesaikan penugasan lama dan menugaskan unit beserta operatornya di shift fleet tujuan.',
         ],
         terms: [
@@ -46,8 +46,8 @@ export const HELP: Record<string, HelpEntry> = {
                 'Match factor (MF)',
                 '(DT aktif × waktu muat) ÷ (excavator × cycle time DT). Ideal = 1.',
             ],
-            ['Hanging time', 'Waktu excavator menganggur karena tidak ada DT di front.'],
-            ['Fleet', 'Satu rute (front loading → dumping) beserta excavator-nya.'],
+            ['Hanging time', 'Waktu excavator menganggur karena tidak ada DT di pit.'],
+            ['Fleet', 'Satu rute (pit → stockpile / jetty) beserta excavator-nya.'],
         ],
     },
     'page:/live': {
@@ -85,12 +85,12 @@ export const HELP: Record<string, HelpEntry> = {
         summary:
             'Kecepatan unit di sepanjang jalan angkut: merah = titik panas (lambat dan sering dilalui).',
         body: [
-            'Hanya titik GPS selama ritase dan di luar radius front loading & dumping yang dihitung, sehingga antrean di front tidak terbaca sebagai jalan lambat.',
+            'Hanya titik GPS selama ritase dan di luar radius pit & stockpile / jetty yang dihitung, sehingga antrean di pit tidak terbaca sebagai jalan lambat.',
             'Mode "Kepadatan lalu lintas" menampilkan ruas yang paling sering dilalui. Titik guncangan berasal dari akselerometer (rem mendadak, akselerasi keras, belok tajam, benturan): indikasi jalan rusak atau cara mengemudi.',
         ],
         terms: [
-            ['Bermuatan (hauling)', 'Perjalanan dari front loading ke dumping.'],
-            ['Kosongan (return)', 'Perjalanan kembali dari dumping ke front loading.'],
+            ['Bermuatan (hauling)', 'Perjalanan dari pit ke stockpile / jetty.'],
+            ['Kosongan (return)', 'Perjalanan kembali dari stockpile / jetty ke pit.'],
         ],
     },
     'page:/operator-report': {
@@ -140,7 +140,7 @@ export const HELP: Record<string, HelpEntry> = {
         title: 'Laporan ritase',
         summary: 'Ritase per rute, operator, unit, shift, atau hari untuk periode yang dipilih.',
         body: [
-            'Ritase dihitung otomatis dari GPS: unit keluar dari front loading rute lalu masuk ke dumping rute yang sama dalam penugasan shift.',
+            'Ritase dihitung otomatis dari GPS: unit keluar dari pit rute lalu masuk ke stockpile / jetty rute yang sama dalam penugasan shift.',
             'Klik baris untuk melihat daftar ritase-nya; tombol Ekspor Excel mengunduh seluruh ritase pada filter yang sama.',
         ],
     },
@@ -150,7 +150,7 @@ export const HELP: Record<string, HelpEntry> = {
         body: [
             'Satu shift = satu rute (fleet). Penugasan menentukan unit mana yang dihitung ritase-nya untuk operator mana.',
             'Istirahat terjadwal (mis. Ishoma) otomatis mengubah status unit menjadi standby terencana selama jamnya, lalu kembali ke status sebelumnya. Template shift mengisi jam dan istirahat secara cepat.',
-            'Saat shift ditutup, unit yang masih hauling atau dumping tetap menyelesaikan ritase terakhirnya.',
+            'Saat shift ditutup, unit yang masih hauling atau dumping tetap menyelesaikan ritase terakhirnya. Unit yang masih return atau loading memuat sekali lagi di pit, hauling, dan dumping, baru selesai (bila keluar dari pit dalam 1 jam setelah shift ditutup).',
         ],
     },
     'page:/operators': {
@@ -168,15 +168,15 @@ export const HELP: Record<string, HelpEntry> = {
         ],
     },
     'page:/sites': {
-        title: 'Front, dumping & rute',
-        summary: 'Master titik (geofence), zona antre & spot, dan rute front loading → dumping.',
+        title: 'Pit, stockpile / jetty & rute',
+        summary: 'Master titik (geofence), zona antre & spot, dan rute pit → stockpile / jetty.',
         body: [
-            'Titik tidak memiliki jenis tetap; perannya (front loading atau dumping) ditentukan di rute.',
+            'Titik tidak memiliki jenis tetap; perannya (pit atau stockpile / jetty) ditentukan di rute.',
             'Zona antre dan spot memisahkan waktu antre dari waktu muat/bongkar pada laporan cycle time.',
         ],
         terms: [
-            ['Front loading', 'Lokasi pemuatan oleh excavator.'],
-            ['Dumping', 'Lokasi pembuangan / disposal / tongkang.'],
+            ['Pit', 'Lokasi pemuatan oleh excavator.'],
+            ['Stockpile / jetty', 'Lokasi pembuangan / disposal / tongkang.'],
             ['Spotting', 'Waktu memposisikan unit di titik muat/bongkar.'],
         ],
     },
@@ -229,7 +229,7 @@ export const HELP: Record<string, HelpEntry> = {
     // ---------- Kartu & metrik ----------
     'card:hourly': {
         title: 'Produksi per jam',
-        summary: 'Ritase & tonase setiap jam menurut waktu GPS keluar dari front loading.',
+        summary: 'Ritase & tonase setiap jam menurut waktu GPS keluar dari pit.',
         body: [
             'Batang abu-abu adalah target. Status Sementara / Final menunjukkan apakah data jam itu sudah lengkap.',
         ],
@@ -244,7 +244,7 @@ export const HELP: Record<string, HelpEntry> = {
         terms: [
             [
                 'Cycle time (CT)',
-                'Waktu satu putaran penuh: front loading → dumping → kembali ke front loading.',
+                'Waktu satu putaran penuh: pit → stockpile / jetty → kembali ke pit.',
             ],
         ],
     },
@@ -260,7 +260,7 @@ export const HELP: Record<string, HelpEntry> = {
         title: 'Match factor',
         summary: 'Keseimbangan jumlah DT terhadap kapasitas excavator. Ideal mendekati 1.',
         body: [
-            '< 0,9 undermatch: excavator menunggu DT. 0,9–1,1 match. > 1,1 overmatch: DT antre di front.',
+            '< 0,9 undermatch: excavator menunggu DT. 0,9–1,1 match. > 1,1 overmatch: DT antre di pit.',
         ],
     },
     'metric:pa': {

@@ -1,5 +1,5 @@
 'use client';
-// Peta zona batas kecepatan (P3-3): lingkaran tiap zona + batasnya, titik front / dumping sebagai
+// Peta zona batas kecepatan (P3-3): lingkaran tiap zona + batasnya, titik pit / stockpile / jetty sebagai
 // patokan, dan draft zona yang sedang diisi. Klik peta = pilih titik tengah zona.
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';

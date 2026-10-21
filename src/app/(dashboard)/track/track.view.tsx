@@ -1,5 +1,5 @@
 'use client';
-// Lacak unit: daftar armada (dengan progres rute front loading → dumping) + peta penuh
+// Lacak unit: daftar armada (dengan progres rute pit → stockpile / jetty) + peta penuh
 // dengan kartu detail mengambang (info, operator, perjalanan, ritase, sensor) dan putar ulang rute.
 import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -53,7 +53,7 @@ const SPEEDS = ['1', '4', '16'];
 
 type FleetTab = 'all' | 'duty' | 'idle';
 
-// Posisi unit di antara front loading dan dumping rutenya: 0 = di front loading, 1 = di dumping.
+// Posisi unit di antara pit dan dumping rutenya: 0 = di pit, 1 = di stockpile / jetty.
 function progressOf(d: Device, from: Site | undefined, to: Site | undefined): number | null {
     if (!d.pos || !from || !to) return null;
     const a = distanceM(d.pos, from);
@@ -106,7 +106,7 @@ export default function TrackView() {
         };
     };
 
-    // Titik dari rute-rute unit yang dipilih, beserta perannya (front loading / dumping) di rute itu.
+    // Titik dari rute-rute unit yang dipilih, beserta perannya (pit / stockpile / jetty) di rute itu.
     const { truckSites, siteRoles } = useMemo(() => {
         const roles = new Map<string, 'loading' | 'unloading'>();
         if (selected) {
@@ -118,7 +118,7 @@ export default function TrackView() {
         return { truckSites: sites.filter((x) => roles.has(x.id)), siteRoles: roles };
     }, [sites, routes, selected]);
 
-    // Garis jalan rute unit: jejak ritase terakhir. Belum pernah berjalan = garis lurus front loading -> dumping.
+    // Garis jalan rute unit: jejak ritase terakhir. Belum pernah berjalan = garis lurus pit -> dumping.
     const truckRoutes = useMemo(
         () => (selected ? routes.filter((r) => r.imeis.includes(selected)) : []),
         [routes, selected],
@@ -361,7 +361,7 @@ export default function TrackView() {
                         <ToggleGroupItem value="map">Peta</ToggleGroupItem>
                         <ToggleGroupItem value="sat">Satelit</ToggleGroupItem>
                     </ToggleGroup>
-                    <Tip label="Front loading/dumping & jalur rute">
+                    <Tip label="Pit / stockpile / jetty & jalur rute">
                         <Button
                             variant="outline"
                             className={cn('shadow-lg', showRoutes && 'border-ring')}
@@ -706,16 +706,21 @@ function InfoTab({ d, job, from, to }: DetailProps) {
                         ? ([
                               ['Shift', job.shiftName],
                               ['Rute', job.routeName],
-                              ['Loading', from?.name ?? '—'],
-                              ['Dumping', to?.name ?? '—'],
+                              ['Pit', from?.name ?? '—'],
+                              ['Stockpile / jetty', to?.name ?? '—'],
                               ...(p != null
-                                  ? [['Progres', `${Math.round(p * 100)}% menuju dumping`]]
+                                  ? [
+                                        [
+                                            'Progres',
+                                            `${Math.round(p * 100)}% menuju stockpile / jetty`,
+                                        ],
+                                    ]
                                   : []),
                               ...(job.phase === 'finishing'
                                   ? [
                                         [
                                             'Status',
-                                            'Shift dihentikan, menyelesaikan ritase terakhir (hauling / dumping)',
+                                            'Shift dihentikan, menyelesaikan ritase terakhir (loading / hauling / dumping)',
                                         ],
                                     ]
                                   : []),

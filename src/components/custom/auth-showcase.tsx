@@ -9,7 +9,7 @@ const SLIDES = [
         src: '/images/login-loader.png',
         alt: 'Loader mengisi dump truck di area tambang batubara, dilihat dari atas',
         title: 'Setiap ritase tercatat otomatis',
-        body: 'Loading sampai dumping dihitung dari GPS unit, lengkap dengan durasi, jarak, dan BBM.',
+        body: 'Dari pit sampai stockpile / jetty dihitung dari GPS unit, lengkap dengan durasi, jarak, dan BBM.',
     },
     {
         src: '/images/login-site.png',

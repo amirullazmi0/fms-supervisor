@@ -1,5 +1,5 @@
 'use client';
-// Panel dispatcher (P2-5 … P2-7): per fleet (rute + excavator) match factor live, DT antre di front,
+// Panel dispatcher (P2-5 … P2-7): per fleet (rute + excavator) match factor live, DT antre di pit,
 // hanging time excavator, DT tidak aktif + alasannya, dan saran memindahkan DT antar fleet.
 import { useState } from 'react';
 import { ArrowRight, Construction, Shuffle } from 'lucide-react';
@@ -42,7 +42,7 @@ const MATCH: Record<
         variant: 'warning',
     },
     match: { label: 'Match', hint: 'Jumlah DT seimbang dengan excavator.', variant: 'success' },
-    over: { label: 'Overmatch', hint: 'DT berlebih, DT antre di front.', variant: 'destructive' },
+    over: { label: 'Overmatch', hint: 'DT berlebih, DT antre di pit.', variant: 'destructive' },
 };
 
 const mfText = (v: number | null) => (v == null ? '—' : fmtNum(v, 2));
@@ -72,8 +72,8 @@ export default function DispatchView() {
                 <Empty>Memuat…</Empty>
             ) : !data || data.fleets.length === 0 ? (
                 <EmptyState icon={Construction} title="Belum ada fleet">
-                    Fleet = rute (front loading → dumping) + excavator. Buat rute di menu Front,
-                    dumping & rute.
+                    Fleet = rute (pit → stockpile / jetty) + excavator. Buat rute di menu Pit,
+                    stockpile / jetty & rute.
                 </EmptyState>
             ) : (
                 <>
@@ -194,7 +194,7 @@ function FleetCard({
                     label="DT ideal (MF 1)"
                     value={f.idealTrucks != null ? fmtNum(f.idealTrucks, 1) : '—'}
                 />
-                <Item label="Antre di front" value={`${f.queue} DT`} danger={f.queue > 1} />
+                <Item label="Antre di pit" value={`${f.queue} DT`} danger={f.queue > 1} />
                 <Item label="Cycle time DT" value={fmtDuration(f.cycleMs)} />
                 <Item label="Waktu muat / DT" value={fmtDuration(f.loadTimeMs)} />
                 <Item label="Basis data" value={f.basisWindow} />
@@ -241,7 +241,7 @@ function FleetCard({
                             <b className="w-20 shrink-0 truncate">{t.label}</b>
                             <span className="min-w-0 flex-1 truncate text-muted-foreground">
                                 {t.driverName}
-                                {t.atFront && ' · di front'}
+                                {t.atFront && ' · di pit'}
                                 {t.inactive ? (
                                     <span className="text-warning"> · {t.inactive}</span>
                                 ) : (
@@ -337,7 +337,7 @@ function LoaderDialog({ f, onClose }: { f: Fleet; onClose: () => void }) {
                 </Field>
                 <Field
                     label="Produktivitas (ton / jam)"
-                    hint="Opsional. Dipakai sebagai waktu muat bila belum ada data GPS di front."
+                    hint="Opsional. Dipakai sebagai waktu muat bila belum ada data GPS di pit."
                     error={tphError}
                 >
                     <Input

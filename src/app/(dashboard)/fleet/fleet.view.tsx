@@ -209,7 +209,7 @@ export default function FleetView() {
                                 <>
                                     <b>{job.driverName}</b> · {job.routeName} ({job.shiftName})
                                     {job.phase === 'finishing'
-                                        ? ' · shift dihentikan, menyelesaikan ritase terakhir (hauling / dumping)'
+                                        ? ' · shift dihentikan, menyelesaikan ritase terakhir (loading / hauling / dumping)'
                                         : ''}
                                     .
                                 </>

@@ -524,7 +524,7 @@ function ShiftForm({
                                 options={routes.map((x) => ({ value: x.id, label: x.name }))}
                                 placeholder="Pilih rute…"
                                 searchPlaceholder="Cari rute…"
-                                empty="Belum ada rute. Buat di menu Front, dumping & rute."
+                                empty="Belum ada rute. Buat di menu Pit, stockpile / jetty & rute."
                                 disabled={started}
                                 aria-label="Rute"
                             />
@@ -554,7 +554,7 @@ function ShiftForm({
                             </legend>
                             {routes.length === 0 ? (
                                 <Note tone="warning">
-                                    Belum ada rute. Buat di menu Front, dumping & rute.
+                                    Belum ada rute. Buat di menu Pit, stockpile / jetty & rute.
                                 </Note>
                             ) : (
                                 <div className="grid max-h-44 gap-1.5 overflow-y-auto sm:grid-cols-2">

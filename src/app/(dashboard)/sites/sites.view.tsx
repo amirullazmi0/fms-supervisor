@@ -1,8 +1,8 @@
 'use client';
 // Titik & rute.
 //   Titik : master titik (gudang, pelabuhan, …) — tempat + radius (default 10 m), tanpa jenis.
-//   Rute  : pilih titik mana yang menjadi front loading dan mana yang menjadi dumping. Satu titik bisa
-//           menjadi front loading di rute A dan dumping di rute B. Operator & unit masuk ke rute lewat penugasan shift.
+//   Rute  : pilih titik mana yang menjadi pit dan mana yang menjadi dumping. Satu titik bisa
+//           menjadi pit di rute A dan dumping di rute B. Operator & unit masuk ke rute lewat penugasan shift.
 // User biasa hanya dapat melihat.
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -192,7 +192,7 @@ export default function SitesView() {
         if (isAdmin && siteForm) setSiteForm({ ...siteForm, lat, lng });
     };
 
-    // Peta: rute yang sedang dipilih/diedit digambar sebagai garis front loading → dumping.
+    // Peta: rute yang sedang dipilih/diedit digambar sebagai garis pit → stockpile / jetty.
     const activeRoute = routeForm
         ? { loadingId: routeForm.loadingId, unloadingId: routeForm.unloadingId }
         : tab === 'routes'
@@ -236,7 +236,7 @@ export default function SitesView() {
             alive = false;
         };
     }, [roadKey, fetchApi]);
-    // Jalur return (dumping → front loading) dihitung terpisah: jalan satu arah bisa berbeda.
+    // Jalur return (stockpile / jetty → pit) dihitung terpisah: jalan satu arah bisa berbeda.
     const [roadBack, setRoadBack] = useState<RoadState>({
         loading: false,
         data: null,
@@ -311,7 +311,7 @@ export default function SitesView() {
               ? 'Klik peta untuk memasang titik, atau ketik lat/lng'
               : 'Klik peta atau geser penanda untuk memindahkan titik'
           : routeForm
-            ? 'Pilih front loading & dumping di panel kiri'
+            ? 'Pilih pit & stockpile / jetty di panel kiri'
             : isAdmin
               ? 'Klik penanda/peta untuk melihat info · "+ Titik" untuk menambah titik baru'
               : 'Klik penanda atau peta untuk melihat info';
@@ -498,11 +498,13 @@ function SitesPanel({
     const shown = sites.filter((s) => !q || s.name.toLowerCase().includes(q.toLowerCase()));
     const selected = sites.find((s) => s.id === selectedId) ?? null;
     const usedBy = (id: string) => routes.filter((r) => r.loadingId === id || r.unloadingId === id);
-    // "front loading di 2 rute · dumping di 1 rute"
+    // "pit di 2 rute · dumping di 1 rute"
     const roleText = (id: string) => {
         const l = routes.filter((r) => r.loadingId === id).length;
         const u = routes.filter((r) => r.unloadingId === id).length;
-        const parts = [l && `loading di ${l} rute`, u && `dumping di ${u} rute`].filter(Boolean);
+        const parts = [l && `pit di ${l} rute`, u && `stockpile / jetty di ${u} rute`].filter(
+            Boolean,
+        );
         return parts.length ? parts.join(' · ') : 'belum dipakai rute';
     };
 
@@ -538,8 +540,8 @@ function SitesPanel({
                 )}
             </div>
             <Empty className="text-xs">
-                Master titik: front loading (pit), dumping / disposal, tongkang (jetty), garasi,
-                dll. Peran front loading / dumping ditentukan di tab Rute.
+                Master titik: pit, stockpile, tongkang (jetty), disposal, garasi, dll. Peran pit /
+                stockpile / jetty ditentukan di tab Rute.
             </Empty>
 
             {sites.length === 0 ? (
@@ -1100,7 +1102,7 @@ interface RoutesPanelProps {
 
 function RoutesPanel(p: RoutesPanelProps) {
     const { isAdmin, sites, siteById, routes, devices, selectedId, onSelect, form } = p;
-    // Titik mana pun bisa menjadi front loading atau dumping; perannya ditentukan di rute.
+    // Titik mana pun bisa menjadi pit atau dumping; perannya ditentukan di rute.
     const loadings = sites;
     const unloadings = sites;
     const selected = routes.find((r) => r.id === selectedId) ?? null;
@@ -1112,9 +1114,7 @@ function RoutesPanel(p: RoutesPanelProps) {
     return (
         <>
             <div className="flex items-center justify-between gap-2">
-                <Empty className="text-xs">
-                    1 rute = pilih 1 titik front loading + 1 titik dumping.
-                </Empty>
+                <Empty className="text-xs">1 rute = pilih 1 titik pit + 1 stockpile / jetty.</Empty>
                 {isAdmin && (
                     <Button size="sm" onClick={p.onNew} disabled={sites.length < 2}>
                         <Plus /> Rute
@@ -1185,8 +1185,8 @@ function RoutesPanel(p: RoutesPanelProps) {
                     </div>
                     <KV
                         rows={[
-                            ['Loading', name(selected.loadingId)],
-                            ['Dumping', name(selected.unloadingId)],
+                            ['Pit', name(selected.loadingId)],
+                            ['Stockpile / jetty', name(selected.unloadingId)],
                             [
                                 'Jarak lurus',
                                 siteById.get(selected.loadingId) &&
@@ -1267,7 +1267,7 @@ function RouteFormView({
     const [confirmDelete, setConfirmDelete] = useState(false);
     const set = <K extends keyof RouteForm>(k: K, v: RouteForm[K]) => setForm({ ...form, [k]: v });
 
-    // Nama otomatis "Front loading → Dumping" bila belum diisi.
+    // Nama otomatis "Pit → Dumping" bila belum diisi.
     const autoName = (l: string, u: string) => {
         const a = loadings.find((s) => s.id === l)?.name;
         const b = unloadings.find((s) => s.id === u)?.name;
@@ -1319,7 +1319,7 @@ function RouteFormView({
             <Field
                 label={
                     <span className="flex items-center gap-1.5">
-                        <SiteDot type="loading" className="size-4 text-[9px]" /> Front loading
+                        <SiteDot type="loading" className="size-4 text-[9px]" /> Pit
                     </span>
                 }
             >
@@ -1329,15 +1329,15 @@ function RouteFormView({
                     options={loadings
                         .filter((s) => s.id !== form.unloadingId)
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
-                    placeholder="Pilih titik front loading…"
+                    placeholder="Pilih titik pit…"
                     searchPlaceholder="Cari titik…"
-                    aria-label="Front loading"
+                    aria-label="Pit"
                 />
             </Field>
             <Field
                 label={
                     <span className="flex items-center gap-1.5">
-                        <SiteDot type="unloading" className="size-4 text-[9px]" /> Titik dumping
+                        <SiteDot type="unloading" className="size-4 text-[9px]" /> Stockpile / jetty
                     </span>
                 }
             >
@@ -1347,9 +1347,9 @@ function RouteFormView({
                     options={unloadings
                         .filter((s) => s.id !== form.loadingId)
                         .map((s) => ({ value: s.id, label: s.name, hint: `${s.radius} m` }))}
-                    placeholder="Pilih titik dumping…"
+                    placeholder="Pilih stockpile / jetty…"
                     searchPlaceholder="Cari titik…"
-                    aria-label="Titik dumping"
+                    aria-label="Stockpile / jetty"
                 />
             </Field>
             {roadInfo}
