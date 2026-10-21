@@ -38,6 +38,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import { Combobox } from '@/components/ui/combobox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Empty, KV, Note, RoutePair, SiteDot } from '@/components/ui/misc';
 import { distanceM } from '@/lib/geo';
@@ -201,21 +202,32 @@ export default function SitesView() {
     };
 
     // Peta: rute yang sedang dipilih/diedit digambar sebagai garis pit → stockpile / jetty.
+    const selectedRoute = tab === 'routes' ? routes.find((r) => r.id === routeId) : undefined;
     const activeRoute = routeForm
-        ? { loadingId: routeForm.loadingId, unloadingId: routeForm.unloadingId }
-        : tab === 'routes'
-          ? (routes.find((r) => r.id === routeId) ?? null)
+        ? {
+              loadingId: routeForm.loadingId,
+              unloadingId: routeForm.unloadingId,
+              jetties: [routeForm.unloadingId, ...routeForm.extraUnloadingIds].filter(Boolean),
+          }
+        : selectedRoute
+          ? { ...selectedRoute, jetties: jettiesOf(selectedRoute) }
           : null;
+    // Rute dengan beberapa stockpile / jetty: garis & jalur jalan digambar ke jetty yang dipilih.
+    const [lineJettyPick, setLineJettyPick] = useState('');
+    const lineJettyId =
+        activeRoute && activeRoute.jetties.includes(lineJettyPick)
+            ? lineJettyPick
+            : (activeRoute?.unloadingId ?? '');
     const lineFrom = activeRoute ? siteById.get(activeRoute.loadingId) : undefined;
-    const lineTo = activeRoute ? siteById.get(activeRoute.unloadingId) : undefined;
+    const lineTo = activeRoute ? siteById.get(lineJettyId) : undefined;
     const routeLine = lineFrom && lineTo ? { from: lineFrom, to: lineTo } : null;
-    // Peran titik di rute yang sedang dipilih/diedit (L/U di penanda peta).
-    const roleKey = activeRoute ? `${activeRoute.loadingId}|${activeRoute.unloadingId}` : '';
+    // Peran titik di rute yang sedang dipilih/diedit (L/U di penanda peta): semua jetty = U.
+    const roleKey = activeRoute ? `${activeRoute.loadingId}|${activeRoute.jetties.join(',')}` : '';
     const roles = useMemo(() => {
         const m = new Map<string, SiteType>();
-        const [l, u] = roleKey.split('|');
+        const [l, us] = roleKey.split('|');
         if (l) m.set(l, 'loading');
-        if (u) m.set(u, 'unloading');
+        for (const u of (us ?? '').split(',')) if (u) m.set(u, 'unloading');
         return m;
     }, [roleKey]);
 
@@ -280,7 +292,8 @@ export default function SitesView() {
         savedRoute &&
         activeRoute &&
         savedRoute.loadingId === activeRoute.loadingId &&
-        savedRoute.unloadingId === activeRoute.unloadingId
+        savedRoute.unloadingId === activeRoute.unloadingId &&
+        lineJettyId === savedRoute.unloadingId // jalur aktual dihitung ke jetty utama
             ? savedRoute.id
             : '';
     const historyKey = historyId && savedRoute ? `${historyId}|${savedRoute.updatedAt}` : '';
@@ -298,15 +311,35 @@ export default function SitesView() {
     }, [historyKey, fetchApi]);
     const roadInfo =
         lineFrom && lineTo ? (
-            <RoadInfo
-                from={lineFrom}
-                to={lineTo}
-                road={road}
-                roadBack={roadBack}
-                active={pathIdx}
-                onActive={setPathIdx}
-                history={history}
-            />
+            <div className="flex flex-col gap-2">
+                {activeRoute && activeRoute.jetties.length > 1 && (
+                    <Field label="Jalur ke stockpile / jetty">
+                        <ToggleGroup
+                            type="single"
+                            size="sm"
+                            value={lineJettyId}
+                            onValueChange={(v) => v && setLineJettyPick(v)}
+                            className="flex-wrap"
+                            aria-label="Jalur ke stockpile / jetty"
+                        >
+                            {activeRoute.jetties.map((id) => (
+                                <ToggleGroupItem key={id} value={id}>
+                                    {siteById.get(id)?.name ?? '?'}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
+                    </Field>
+                )}
+                <RoadInfo
+                    from={lineFrom}
+                    to={lineTo}
+                    road={road}
+                    roadBack={roadBack}
+                    active={pathIdx}
+                    onActive={setPathIdx}
+                    history={history}
+                />
+            </div>
         ) : null;
 
     const placing = isAdmin && (siteForm != null || Boolean(zoneEdit?.adding));
@@ -627,12 +660,7 @@ function SitesPanel({
                         ]}
                     />
                     {isAdmin && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="self-start"
-                            onClick={() => onZones(selected)}
-                        >
+                        <Button size="sm" className="self-start" onClick={() => onZones(selected)}>
                             <Layers /> Atur zona antre & spot
                         </Button>
                     )}
@@ -1129,7 +1157,7 @@ function RoutesPanel(p: RoutesPanelProps) {
     return (
         <>
             <div className="flex items-center justify-between gap-2">
-                <Empty className="text-xs">1 rute = pilih 1 titik pit + 1 stockpile / jetty.</Empty>
+                <Empty className="text-xs">1 rute = 1 titik pit + 1 atau lebih stockpile / jetty.</Empty>
                 {isAdmin && (
                     <Button size="sm" onClick={p.onNew} disabled={sites.length < 2}>
                         <Plus /> Rute
