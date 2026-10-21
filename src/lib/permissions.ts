@@ -36,6 +36,7 @@ export const P = {
     mdtManage: 'mdt.manage',
     unitStatusWrite: 'unit_status.write',
     dispatchManage: 'dispatch.manage',
+    speedZoneManage: 'speed_zone.manage',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

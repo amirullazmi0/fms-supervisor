@@ -16,6 +16,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
     Activity,
     Flame,
+    TrafficCone,
     Shuffle,
     Bell,
     CalendarClock,
@@ -125,6 +126,13 @@ const NAV: {
         need: [P.reportRead],
         group: 'Produksi',
         bottom: true,
+    },
+    {
+        to: '/speed-zones',
+        label: 'Zona kecepatan',
+        icon: TrafficCone,
+        need: [P.reportRead],
+        group: 'Produksi',
     },
     {
         to: '/heatmap',

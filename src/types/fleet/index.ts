@@ -480,7 +480,8 @@ export type StreamMsg =
     | ({ type: 'command' } & CommandLine)
     | { type: 'log'; entry: LogEntry }
     | { type: 'unit_status'; imei: string } // status unit berubah (MDT / supervisor)
-    | { type: 'dispatch' }; // excavator fleet berubah
+    | { type: 'dispatch' } // excavator fleet berubah
+    | { type: 'speed_zones' }; // zona batas kecepatan berubah
 
 // ---------- Produksi, status unit, MDT ----------
 
@@ -735,5 +736,45 @@ export interface HeatmapReport {
     cellDeg: number;
     cells: HeatCell[];
     shocks: ShockPoint[];
+    truncated: boolean;
+}
+
+// ---------- Zona batas kecepatan & overspeed (P3-3) ----------
+export interface SpeedZone {
+    id: string;
+    name: string;
+    kind: 'downhill' | 'crossing' | 'barge' | 'other';
+    lat: number;
+    lng: number;
+    radius: number;
+    limitKmh: number;
+    active: boolean;
+}
+
+export interface Overspeed {
+    imei: string;
+    unit: string;
+    driverName: string | null;
+    zoneId: string;
+    zoneName: string;
+    limitKmh: number;
+    maxSpeed: number;
+    startAt: number;
+    endAt: number;
+    points: number;
+}
+
+export interface OverspeedDriver {
+    driverName: string;
+    episodes: number;
+    maxOver: number;
+    totalMs: number;
+}
+
+export interface OverspeedReport {
+    from: number;
+    to: number;
+    episodes: Overspeed[];
+    drivers: OverspeedDriver[];
     truncated: boolean;
 }

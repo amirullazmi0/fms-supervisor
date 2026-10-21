@@ -146,6 +146,9 @@ export default function StreamProvider({ children }: { children: ReactNode }) {
                         'dispatch-fleets',
                     );
                     break;
+                case 'speed_zones':
+                    refetch('speed-zones');
+                    break;
                 case 'dispatch':
                     refetch('dispatch-fleets');
                     break;
