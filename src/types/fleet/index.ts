@@ -778,3 +778,32 @@ export interface OverspeedReport {
     drivers: OverspeedDriver[];
     truncated: boolean;
 }
+
+// ---------- Breakdown & durasi perbaikan (P3-5): GET /reports/breakdowns ----------
+export interface Breakdown {
+    imei: string;
+    unit: string;
+    codes: string[];
+    driverName: string | null;
+    note: string | null;
+    startAt: number;
+    endAt: number | null;
+    durationMs: number;
+}
+
+export interface BreakdownReport {
+    from: number;
+    to: number;
+    episodes: Breakdown[];
+    units: {
+        imei: string;
+        unit: string;
+        count: number;
+        totalMs: number;
+        mttrMs: number | null;
+        openNow: boolean;
+    }[];
+    codes: { name: string; count: number; totalMs: number }[];
+    mttrMs: number | null;
+    open: number;
+}
