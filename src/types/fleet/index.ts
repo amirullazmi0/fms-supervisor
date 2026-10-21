@@ -807,3 +807,38 @@ export interface BreakdownReport {
     mttrMs: number | null;
     open: number;
 }
+
+// ---------- Rapor operator (P3-6) & laporan idle (P3-7): GET /reports/operators ----------
+export interface OperatorScore {
+    driverId: string;
+    driverName: string;
+    shifts: number;
+    ritase: number;
+    cycleMs: number | null;
+    dumpMs: number | null;
+    idleMs: number;
+    overspeed: number;
+    harsh: number;
+    lateStarts: number;
+    lateStartMs: number;
+    earlyEnds: number;
+    earlyEndMs: number;
+    score: number; // 0–100
+}
+
+export interface IdleUnit {
+    imei: string;
+    unit: string;
+    idleMs: number;
+    fuelL: number;
+    fromCan: boolean;
+    shareOfJob: number; // persen
+}
+
+export interface OperatorReport {
+    from: number;
+    to: number;
+    operators: OperatorScore[];
+    idle: IdleUnit[];
+    idleLph: number;
+}
