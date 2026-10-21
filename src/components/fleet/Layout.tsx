@@ -15,6 +15,7 @@ import { usePathname } from 'next/navigation';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
     Activity,
+    Flame,
     Shuffle,
     Bell,
     CalendarClock,
@@ -124,6 +125,13 @@ const NAV: {
         need: [P.reportRead],
         group: 'Produksi',
         bottom: true,
+    },
+    {
+        to: '/heatmap',
+        label: 'Heat map jalan',
+        icon: Flame,
+        need: [P.reportRead],
+        group: 'Produksi',
     },
     {
         to: '/availability',

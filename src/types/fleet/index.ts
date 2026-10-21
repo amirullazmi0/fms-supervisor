@@ -710,3 +710,30 @@ export interface DispatchBoard {
     fleets: Fleet[];
     moves: FleetMove[];
 }
+
+// ---------- Heat map jalan (P3-2): GET /reports/heatmap ----------
+export interface HeatCell {
+    lat: number;
+    lng: number;
+    points: number;
+    avgSpeed: number; // km/jam
+    maxSpeed: number;
+}
+
+export interface ShockPoint {
+    lat: number;
+    lng: number;
+    time: number;
+    imei: string;
+    kind: 'accel' | 'brake' | 'corner' | 'crash';
+    g: number | null;
+}
+
+export interface HeatmapReport {
+    from: number;
+    to: number;
+    cellDeg: number;
+    cells: HeatCell[];
+    shocks: ShockPoint[];
+    truncated: boolean;
+}
