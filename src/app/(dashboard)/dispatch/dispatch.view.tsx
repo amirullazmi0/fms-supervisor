@@ -205,6 +205,7 @@ function FleetCard({
                 {f.loader ? (
                     <span className="min-w-0 flex-1 truncate">
                         <b>{f.loader.label}</b>
+                        {f.loaderCount > 1 && ` · ${f.loaderCount} excavator di pit`}
                         {f.loader.productivityTph != null &&
                             ` · ${fmtNum(f.loader.productivityTph)} t/jam`}
                         {hangPct != null && (
@@ -216,7 +217,8 @@ function FleetCard({
                     </span>
                 ) : (
                     <span className="flex-1 text-muted-foreground">
-                        Belum ada excavator. MF dihitung dengan 1 excavator.
+                        Belum ada excavator di pit. MF dihitung dengan 1 excavator. Tugaskan EX di
+                        menu Shift (lokasi Pit) atau pasang di sini.
                     </span>
                 )}
                 {canManage && (

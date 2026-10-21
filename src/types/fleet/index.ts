@@ -259,6 +259,7 @@ export interface OnDuty {
     phase?: 'active' | 'finishing' | 'done';
     closedAt?: number | null;
     unloadingId?: string | null; // stockpile / jetty tujuan unit (null = jetty utama rute)
+    workSiteId?: string | null; // excavator: lokasi kerja (null = pit rute)
 }
 
 // Rute = 1 titik pit + 1 stockpile / jetty. Operator & unit masuk ke rute lewat penugasan shift.
@@ -270,6 +271,7 @@ export interface Route {
     unloadingIds?: string[]; // semua stockpile / jetty, utama dulu; ritase selesai di salah satunya
     note: string | null;
     onDuty: OnDuty[];
+    excavators?: OnDuty[]; // excavator di shift berjalan rute ini (+ lokasi kerjanya)
     recentDone?: OnDuty[]; // unit yang shift-nya sudah selesai di rute ini (12 jam terakhir)
     imeis: string[]; // unit dari onDuty
     createdAt: number;
@@ -372,6 +374,7 @@ export interface Assignment {
     imei: string;
     routeId: string;
     unloadingId: string | null; // stockpile / jetty tujuan unit (null = jetty utama rute)
+    workSiteId: string | null; // excavator: lokasi kerja (null = pit rute, atau stockpile / jetty rute)
     note: string | null;
     startAt: number | null; // null = dari awal shift
     endAt: number | null; // null = masih berlaku sampai shift selesai
@@ -685,6 +688,7 @@ export interface Fleet {
     loadingName: string;
     unloadingName: string;
     loader: FleetLoader | null;
+    loaderCount: number; // excavator di pit (shift berjalan), min 1 untuk MF
     trucks: FleetTruck[];
     active: number;
     loadTimeMs: number;

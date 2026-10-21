@@ -110,6 +110,8 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
         .map((id) => sites.find((s) => s.id === id))
         .filter((s) => s != null)
         .map((s) => ({ id: s.id, name: s.name }));
+    const pitSite = route ? sites.find((s) => s.id === route.loadingId) : undefined;
+    const pit = pitSite ? { id: pitSite.id, name: pitSite.name } : null;
 
     if (!route)
         return (
@@ -163,6 +165,7 @@ export default function ShiftCrew({ shift, route, others, trips, editable, onCha
                             onToggle={() => setExpanded(expanded === a.id ? null : a.id)}
                             freeTrucks={freeTrucks}
                             jetties={jetties}
+                            pit={pit}
                             status={shift.status}
                             shiftStart={shift.startedAt}
                             onChanged={onChanged}
@@ -580,6 +583,7 @@ interface ItemProps {
     onToggle: () => void;
     freeTrucks: Device[];
     jetties: { id: string; name: string }[]; // stockpile / jetty rute, utama dulu
+    pit: { id: string; name: string } | null; // pit rute (lokasi bawaan excavator)
     status: Shift['status'];
     shiftStart: number | null;
     onChanged: () => void;
@@ -596,6 +600,7 @@ function AssignmentItem({
     onToggle,
     freeTrucks,
     jetties,
+    pit,
     status,
     shiftStart,
     onChanged,
@@ -618,7 +623,13 @@ function AssignmentItem({
     const ending = status === 'active' && trips.length > 0;
     const update = useMutationApiRequest<
         GlobalApiResponse<Assignment>,
-        { driverId: string; imei: string; unloadingId: string | null; note: string | null }
+        {
+            driverId: string;
+            imei: string;
+            unloadingId: string | null;
+            workSiteId: string | null;
+            note: string | null;
+        }
     >({
         key: 'assignments-update',
         params: { id: a.id },
@@ -636,6 +647,7 @@ function AssignmentItem({
                 driverId: a.driverId,
                 imei,
                 unloadingId: a.unloadingId,
+                workSiteId: a.workSiteId,
                 note: a.note,
             });
             toast({
@@ -657,10 +669,32 @@ function AssignmentItem({
                 driverId: a.driverId,
                 imei: a.imei,
                 unloadingId,
+                workSiteId: a.workSiteId,
                 note: a.note,
             });
             toast({
                 title: `Tujuan ${truck ? truckLabel(truck) : a.imei}: ${jetties.find((j) => j.id === unloadingId)?.name ?? ''}`,
+            });
+            onChanged();
+        } catch (err) {
+            toast({ title: 'Gagal', body: errText(err), level: 'crit' });
+        }
+    };
+    // Excavator: lokasi kerja (pit, atau stockpile / jetty rute) sebagai ganti jetty tujuan.
+    const isEx = truck?.unitType === 'EX';
+    const workSites = [...(pit ? [pit] : []), ...jetties];
+    const workSite = workSites.find((x) => x.id === a.workSiteId) ?? workSites[0];
+    const changeWork = async (id: string) => {
+        try {
+            await update.mutateAsync({
+                driverId: a.driverId,
+                imei: a.imei,
+                unloadingId: null,
+                workSiteId: id === pit?.id ? null : id,
+                note: a.note,
+            });
+            toast({
+                title: `${truck ? truckLabel(truck) : a.imei} bekerja di ${workSites.find((x) => x.id === id)?.name ?? ''}`,
             });
             onChanged();
         } catch (err) {
@@ -708,19 +742,26 @@ function AssignmentItem({
                         <span className="truncate font-mono text-xs text-muted-foreground">
                             {truck ? truckLabel(truck) : a.imei}
                             {when && <span className="font-sans"> · {when}</span>}
-                            {jetties.length > 1 && jetty && (
+                            {isEx && workSite && (
+                                <span className="font-sans"> · EX di {workSite.name}</span>
+                            )}
+                            {!isEx && jetties.length > 1 && jetty && (
                                 <span className="font-sans"> · ke {jetty.name}</span>
                             )}
                         </span>
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-0.5">
-                        <span className="flex items-center gap-1.5 text-sm">
-                            <b className="tabular-nums">{done.length}</b>
-                            <span className="text-xs text-muted-foreground">
-                                ritase · {back.length} return
+                        {isEx ? (
+                            <Badge variant="outline">Excavator</Badge>
+                        ) : (
+                            <span className="flex items-center gap-1.5 text-sm">
+                                <b className="tabular-nums">{done.length}</b>
+                                <span className="text-xs text-muted-foreground">
+                                    ritase · {back.length} return
+                                </span>
+                                {going && <Badge variant="info">jalan</Badge>}
                             </span>
-                            {going && <Badge variant="info">jalan</Badge>}
-                        </span>
+                        )}
                         {unit && trips.length > 0 && (
                             <span className="text-xs text-muted-foreground tabular-nums">
                                 {fmtNum(fuel, 1)} {unit}
@@ -736,7 +777,24 @@ function AssignmentItem({
                 </button>
                 {editable && !ended && (
                     <div className="flex shrink-0 items-center gap-1 max-sm:w-full max-sm:px-4 max-sm:pb-3">
-                        {jetties.length > 1 && (
+                        {isEx && workSites.length > 1 && (
+                            <Combobox
+                                size="sm"
+                                className="w-40 max-sm:flex-1"
+                                value={workSite?.id ?? ''}
+                                onChange={(v) => void changeWork(v)}
+                                options={workSites.map((x, i) => ({
+                                    value: x.id,
+                                    label: x.name,
+                                    hint: i === 0 && pit ? 'Pit' : 'Stockpile / jetty',
+                                }))}
+                                placeholder="Lokasi kerja…"
+                                searchPlaceholder="Cari lokasi…"
+                                empty="Tidak ada lokasi."
+                                aria-label="Lokasi kerja excavator"
+                            />
+                        )}
+                        {!isEx && jetties.length > 1 && (
                             <Combobox
                                 size="sm"
                                 className="w-40 max-sm:flex-1"

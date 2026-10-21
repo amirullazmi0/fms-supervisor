@@ -59,7 +59,7 @@ import {
 } from '@/components/ui/dialog';
 import { Empty, KV, Note, RoutePair, SiteDot, Stat } from '@/components/ui/misc';
 import { distanceM } from '@/lib/geo';
-import type { Route, Shift, ShiftBreak, TripRecord } from '@/types/fleet';
+import type { Assignment, Route, Shift, ShiftBreak, TripRecord } from '@/types/fleet';
 
 const STATUS: Record<Shift['status'] | 'overdue', { label: string; variant: BadgeVariant }> = {
     planned: { label: 'Rencana', variant: 'outline' },
@@ -715,7 +715,8 @@ function ShiftForm({
 }
 
 // ---------- Detail shift ----------
-// Stockpile / jetty rute shift ini: unit yang dituju ke tiap jetty dan ritasenya.
+// Pit & stockpile / jetty rute shift ini: excavator di tiap lokasi, DT yang dituju ke tiap jetty,
+// dan ritasenya.
 function ShiftJetties({
     shift,
     route,
@@ -729,20 +730,63 @@ function ShiftJetties({
     const ids = route.unloadingIds ?? [route.unloadingId];
     const pit = sites.find((x) => x.id === route.loadingId);
     const open = shift.assignments.filter((a) => a.endAt == null);
+    const isEx = (a: Assignment) => devices[a.imei]?.unitType === 'EX';
+    const exAt = (siteId: string) =>
+        open.filter((a) => isEx(a) && (a.workSiteId ?? route.loadingId) === siteId);
     const avgMs = (xs: TripRecord[]) =>
         xs.length ? fmtDuration(xs.reduce((n, t) => n + t.durationMs, 0) / xs.length) : '—';
+    const unitList = (list: Assignment[], empty: string) =>
+        list.length > 0 ? (
+            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+                {list.map((a) => {
+                    const d = drivers.find((x) => x.id === a.driverId);
+                    const t = devices[a.imei];
+                    return (
+                        <li key={a.id}>
+                            <Badge variant="muted">
+                                {t ? truckLabel(t) : a.imei}
+                                {d ? ` · ${d.name}` : ''}
+                            </Badge>
+                        </li>
+                    );
+                })}
+            </ul>
+        ) : (
+            <Empty className="text-xs">{empty}</Empty>
+        );
+    const pitEx = pit ? exAt(pit.id) : [];
 
     return (
-        <section className="flex flex-col gap-3" aria-label="Stockpile / jetty">
+        <section className="flex flex-col gap-3" aria-label="Pit & stockpile / jetty">
             <h3 className="m-0 text-[15px] font-semibold">
-                Stockpile / jetty{' '}
-                <span className="font-normal text-muted-foreground">· {ids.length} tujuan</span>
+                Pit &amp; stockpile / jetty{' '}
+                <span className="font-normal text-muted-foreground">
+                    · {ids.length} tujuan · {open.filter(isEx).length} excavator
+                </span>
             </h3>
             <div className="grid gap-3 md:grid-cols-2">
+                {pit && (
+                    <Card className="gap-3 px-4 py-4">
+                        <div className="flex items-center gap-2">
+                            <SiteDot type="loading" className="size-5 text-[10px]" />
+                            <b className="min-w-0 flex-1 truncate">{pit.name}</b>
+                            <Badge variant="outline">Pit</Badge>
+                        </div>
+                        <KV
+                            rows={[
+                                ['Radius', `${pit.radius} m`],
+                                ['Excavator', `${pitEx.length} unit`],
+                                ['DT bertugas', `${open.filter((a) => !isEx(a)).length} unit`],
+                            ]}
+                        />
+                        {unitList(pitEx, 'Belum ada excavator di pit.')}
+                    </Card>
+                )}
                 {ids.map((id, i) => {
                     const site = sites.find((x) => x.id === id);
                     const name = site?.name ?? '?';
-                    const units = open.filter((a) => (a.unloadingId ?? ids[0]) === id);
+                    const units = open.filter((a) => !isEx(a) && (a.unloadingId ?? ids[0]) === id);
+                    const exs = exAt(id);
                     const go = trips.filter(
                         (t) => t.leg === 'go' && t.status === 'done' && t.unloadingName === name,
                     );
@@ -770,32 +814,20 @@ function ShiftJetties({
                                               : `${(dist / 1000).toFixed(1)} km`,
                                     ],
                                     ['Radius', site ? `${site.radius} m` : '—'],
-                                    ['Unit dituju', `${units.length} unit`],
+                                    [
+                                        'Excavator',
+                                        exs.length
+                                            ? `${exs.length} unit`
+                                            : 'Tidak ada (dumping langsung)',
+                                    ],
+                                    ['DT dituju', `${units.length} unit`],
                                     ['Ritase selesai', `${go.length} · ${back.length} return`],
                                     ['Rata-rata hauling', avgMs(go)],
                                     ['Rata-rata return', avgMs(back)],
                                 ]}
                             />
-                            {units.length > 0 ? (
-                                <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-                                    {units.map((a) => {
-                                        const d = drivers.find((x) => x.id === a.driverId);
-                                        const t = devices[a.imei];
-                                        return (
-                                            <li key={a.id}>
-                                                <Badge variant="muted">
-                                                    {t ? truckLabel(t) : a.imei}
-                                                    {d ? ` · ${d.name}` : ''}
-                                                </Badge>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            ) : (
-                                <Empty className="text-xs">
-                                    Belum ada unit yang dituju ke sini.
-                                </Empty>
-                            )}
+                            {exs.length > 0 && unitList(exs, '')}
+                            {unitList(units, 'Belum ada DT yang dituju ke sini.')}
                         </Card>
                     );
                 })}
