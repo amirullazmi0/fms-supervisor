@@ -5,7 +5,8 @@ import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import useQueryApiRequest from '@/hooks/react-query/useQueryApiRequest';
 import { PageHeader } from '@/components/fleet/Page';
-import { SHOCK, SPEED_BANDS } from '@/components/fleet/HeatMap';
+import { HEAT_GRADIENT, SHOCK } from '@/components/fleet/HeatMap';
+import type { HeatMode } from '@/components/fleet/HeatMap';
 import { useData } from '@/provider/StreamProvider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -26,7 +27,8 @@ export default function HeatmapView() {
     const [range, setRange] = useState<Range>('7d');
     const [load, setLoad] = useState<Load>('all');
     const [route, setRoute] = useState('');
-    const [showShocks, setShowShocks] = useState(true);
+    const [showShocks, setShowShocks] = useState(false);
+    const [mode, setMode] = useState<HeatMode>('slow');
 
     const queries = useMemo(() => {
         const today = dateKey();
@@ -60,9 +62,18 @@ export default function HeatmapView() {
         <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-3 p-3 md:p-5">
             <PageHeader
                 title="Heat map jalan"
-                description="Kecepatan rata-rata unit per segmen jalan (±22 m) selama ritase, di luar radius front loading & dumping. Merah = lambat (titik panas), hijau = lancar. Titik bulat = guncangan dari akselerometer."
+                description="Kecepatan unit per segmen jalan selama ritase, di luar radius front loading & dumping. Mode titik panas: merah = unit lambat dan sering lewat (bottleneck). Arahkan kursor ke jalan untuk melihat angkanya."
             />
             <div className="flex flex-wrap items-center gap-2">
+                <ToggleGroup
+                    type="single"
+                    value={mode}
+                    onValueChange={(v) => v && setMode(v as HeatMode)}
+                    aria-label="Mode heat map"
+                >
+                    <ToggleGroupItem value="slow">Titik panas (lambat)</ToggleGroupItem>
+                    <ToggleGroupItem value="traffic">Kepadatan lalu lintas</ToggleGroupItem>
+                </ToggleGroup>
                 <ToggleGroup
                     type="single"
                     value={range}
@@ -104,24 +115,26 @@ export default function HeatmapView() {
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                    km/jam:
-                    {SPEED_BANDS.map((b) => (
-                        <span key={b.label} className="flex items-center gap-1">
-                            <i className="size-3 rounded-sm" style={{ background: b.color }} />
-                            {b.label}
+                <span className="flex items-center gap-2">
+                    {mode === 'slow' ? 'Lancar' : 'Sepi'}
+                    <i
+                        className="h-2.5 w-40 rounded-full"
+                        style={{
+                            background: `linear-gradient(to right, ${HEAT_GRADIENT.map(([at, c]) => `${c} ${at * 100}%`).join(', ')})`,
+                        }}
+                    />
+                    {mode === 'slow' ? 'Lambat & sering dilalui' : 'Padat'}
+                </span>
+                {showShocks &&
+                    (Object.keys(SHOCK) as ShockPoint['kind'][]).map((k) => (
+                        <span key={k} className="flex items-center gap-1">
+                            <i
+                                className="size-2.5 rounded-full"
+                                style={{ background: SHOCK[k].color }}
+                            />
+                            {SHOCK[k].label} {byKind[k] ? `(${byKind[k]})` : ''}
                         </span>
                     ))}
-                </span>
-                {(Object.keys(SHOCK) as ShockPoint['kind'][]).map((k) => (
-                    <span key={k} className="flex items-center gap-1">
-                        <i
-                            className="size-2.5 rounded-full"
-                            style={{ background: SHOCK[k].color }}
-                        />
-                        {SHOCK[k].label} {byKind[k] ? `(${byKind[k]})` : ''}
-                    </span>
-                ))}
             </div>
 
             {rep && (
@@ -146,7 +159,7 @@ export default function HeatmapView() {
                 ) : (
                     <HeatMap
                         cells={rep?.cells ?? []}
-                        cellDeg={rep?.cellDeg ?? 0.0002}
+                        mode={mode}
                         shocks={shocks}
                         sites={shownSites}
                     />
